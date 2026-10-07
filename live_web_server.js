@@ -1009,7 +1009,7 @@ const server = http.createServer(async (req, res) => {
       </form>
       <div class="btn-group">
         <button id="viewToggleBtn" onclick="toggleViewMode()" class="btn btn-secondary">📱 Cards View</button>
-        <button onclick="openHelpModal()" class="btn btn-secondary" title="View exact indicators and math formulas">❓ How It Calculates</button>
+        <button onclick="openHelpModal()" class="btn btn-secondary" title="View exact indicators and math formulas">❓ How</button>
         <button onclick="fetchData()" class="btn btn-secondary">🔄 Refresh</button>
       </div>
     </div>
