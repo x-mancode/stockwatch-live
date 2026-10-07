@@ -1,0 +1,12 @@
+{
+  "name": "stockwatch-live",
+  "version": "1.0.0",
+  "description": "NSE Live Stock Indicator & Trading Terminal",
+  "main": "live_web_server.js",
+  "scripts": {
+    "start": "node live_web_server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

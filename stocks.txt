@@ -1,0 +1,16 @@
+# Enter your NSE stock symbols below (one per line, without .NS)
+PETRONET
+RELIANCE
+TCS
+INFY
+HDFCBANK
+ICICIBANK
+SBIN
+ITC
+LT
+ONGC
+COALINDIA
+BHARTIARTL
+WIPRO
+TITAN
+BEL

@@ -1,0 +1,5 @@
+node_modules/
+cloudflared.exe
+*.xlsx
+.env
+.DS_Store
