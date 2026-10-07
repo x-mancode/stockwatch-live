@@ -290,6 +290,14 @@ function getMarketStatus() {
 const server = http.createServer(async (req, res) => {
   const url = req.url.split('?')[0];
 
+  // Favicon route
+  if (url === '/favicon.ico') {
+    const faviconSvg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='#131b2e'/><path d='M12 44 L24 32 L34 40 L52 18' stroke='#22c55e' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' fill='none'/><path d='M42 18 H52 V28' stroke='#22c55e' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>`;
+    res.writeHead(200, { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public, max-age=86400' });
+    res.end(faviconSvg);
+    return;
+  }
+
   // API 1: Fetch all stocks
   if (url === '/api/stocks') {
     const list = getStockList();
@@ -365,6 +373,8 @@ const server = http.createServer(async (req, res) => {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>StockWatch Live Real-Time Terminal</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23131b2e'/%3E%3Cpath d='M12 44 L24 32 L34 40 L52 18' stroke='%2322c55e' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Cpath d='M42 18 H52 V28' stroke='%2322c55e' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
+  <link rel="alternate icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
   <style>
     :root {
       --bg-main: #0b0f19;
