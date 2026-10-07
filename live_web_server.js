@@ -112,8 +112,10 @@ async function fetchLiveStock(rawSymbol) {
     if (valid.length < 50) return null;
 
     const livePrice = meta.regularMarketPrice || valid[valid.length - 1].close;
-    const prevClose = meta.chartPreviousClose || (valid.length > 1 ? valid[valid.length - 2].close : livePrice);
-    const changePct = ((livePrice - prevClose) / prevClose) * 100;
+    const prevClose = valid.length > 1 ? valid[valid.length - 2].close : livePrice;
+    const changePct = (meta.regularMarketChangePercent !== undefined && meta.regularMarketChangePercent !== null)
+      ? meta.regularMarketChangePercent
+      : (((livePrice - prevClose) / prevClose) * 100);
 
     valid[valid.length - 1].close = livePrice;
     const closes = valid.map(d => d.close);
