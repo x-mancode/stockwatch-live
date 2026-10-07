@@ -1172,7 +1172,10 @@ const server = http.createServer(async (req, res) => {
 
     applyViewMode();
 
+    let isFetching = false;
     async function fetchData() {
+      if (isFetching) return;
+      isFetching = true;
       try {
         const res = await fetch('/api/stocks');
         const data = await res.json();
@@ -1297,6 +1300,8 @@ const server = http.createServer(async (req, res) => {
         document.getElementById('statNeutral').innerText = neutralCount + ' Neutral';
       } catch (err) {
         console.error(err);
+      } finally {
+        isFetching = false;
       }
     }
 
@@ -1342,9 +1347,9 @@ const server = http.createServer(async (req, res) => {
       fetchData();
     }
 
-    // Auto-fetch on load and repeat every 10 seconds
+    // Auto-fetch on load and repeat every 5 seconds
     fetchData();
-    setInterval(fetchData, 10000);
+    setInterval(fetchData, 5000);
   </script>
 </body>
 </html>`;
