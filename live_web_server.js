@@ -234,6 +234,59 @@ function saveStockList(list) {
   fs.writeFileSync(stocksTxtPath, '# StockWatch Watchlist\n' + list.join('\n') + '\n', 'utf8');
 }
 
+function getMarketStatus() {
+  const now = new Date();
+  const istString = now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+  const istDate = new Date(istString);
+  const day = istDate.getDay(); // 0 = Sun, 6 = Sat
+  const hour = istDate.getHours();
+  const minute = istDate.getMinutes();
+  const timeInMins = hour * 60 + minute;
+
+  // Weekend
+  if (day === 0 || day === 6) {
+    return {
+      isOpen: false,
+      isPreOpen: false,
+      badgeText: 'NSE CLOSED (Weekend)',
+      badgeClass: 'market-closed',
+      detail: 'Last Close Data • Opens Monday 9:15 AM'
+    };
+  }
+
+  // Pre-market: 9:00 AM to 9:14 AM
+  if (timeInMins >= 540 && timeInMins < 555) {
+    return {
+      isOpen: false,
+      isPreOpen: true,
+      badgeText: 'PRE-OPEN (9:00 - 9:15 AM)',
+      badgeClass: 'market-pre',
+      detail: 'Order Collection / Discovery Phase'
+    };
+  }
+
+  // Normal Trading Session: 9:15 AM to 3:30 PM (555 to 930 mins)
+  if (timeInMins >= 555 && timeInMins <= 930) {
+    return {
+      isOpen: true,
+      isPreOpen: false,
+      badgeText: 'LIVE NSE (Market Open)',
+      badgeClass: 'market-live',
+      detail: 'Live Streaming Quotes • Closes 3:30 PM'
+    };
+  }
+
+  // Weekday After Hours (Before 9:00 AM or after 3:30 PM)
+  const detail = timeInMins < 540 ? 'Last Close Data • Opens today at 9:15 AM' : 'Last Close Data • Opens tomorrow at 9:15 AM';
+  return {
+    isOpen: false,
+    isPreOpen: false,
+    badgeText: 'NSE CLOSED',
+    badgeClass: 'market-closed',
+    detail
+  };
+}
+
 const server = http.createServer(async (req, res) => {
   const url = req.url.split('?')[0];
 
@@ -246,6 +299,7 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
     res.end(JSON.stringify({
       timestamp: new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      market: getMarketStatus(),
       stocks: results
     }));
     return;
@@ -365,25 +419,56 @@ const server = http.createServer(async (req, res) => {
       letter-spacing: -0.3px;
       color: #fff;
     }
-    .live-badge {
+    .market-badge {
       display: inline-flex;
       align-items: center;
       gap: 7px;
-      background: rgba(34, 197, 94, 0.12);
-      border: 1px solid rgba(34, 197, 94, 0.3);
-      padding: 4px 10px;
+      padding: 4px 11px;
       border-radius: 20px;
       font-size: 11px;
-      color: var(--green-text);
-      font-weight: 600;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      transition: 0.3s;
     }
-    .pulse-dot {
+    .market-badge.market-live {
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.35);
+      color: #4ade80;
+    }
+    .market-badge.market-live .status-dot {
       width: 7px;
       height: 7px;
       background: #22c55e;
       border-radius: 50%;
       box-shadow: 0 0 8px #22c55e;
       animation: pulse 1.5s infinite;
+    }
+
+    .market-badge.market-pre {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      color: #fbbf24;
+    }
+    .market-badge.market-pre .status-dot {
+      width: 7px;
+      height: 7px;
+      background: #f59e0b;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #f59e0b;
+      animation: pulse 1.5s infinite;
+    }
+
+    .market-badge.market-closed {
+      background: rgba(148, 163, 184, 0.1);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      color: #94a3b8;
+    }
+    .market-badge.market-closed .status-dot {
+      width: 7px;
+      height: 7px;
+      background: #ef4444;
+      border-radius: 50%;
+      box-shadow: none;
     }
     @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.8); } }
 
@@ -789,9 +874,9 @@ const server = http.createServer(async (req, res) => {
     <div class="top-bar">
       <div class="brand-group">
         <h1 class="brand-title">📈 StockWatch Terminal</h1>
-        <div class="live-badge">
-          <div class="pulse-dot"></div>
-          <span>LIVE NSE</span>
+        <div id="marketBadge" class="market-badge market-closed">
+          <div class="status-dot"></div>
+          <span id="marketBadgeText">CHECKING MARKET...</span>
         </div>
       </div>
       <div class="meta-group">
@@ -799,13 +884,15 @@ const server = http.createServer(async (req, res) => {
         <span class="stat-pill bear" id="statBear">0 Shorts</span>
         <span class="stat-pill neutral" id="statNeutral">0 Hold</span>
         <span style="color: #64748b;">|</span>
-        <span>Updated: <b id="updateTime" style="color: #f1f5f9;">Loading...</b></span>
+        <span id="marketDetailText" style="color: #94a3b8; font-size: 12px;">Market Closed</span>
+        <span style="color: #64748b;">|</span>
+        <span>IST: <b id="updateTime" style="color: #f1f5f9;">Loading...</b></span>
       </div>
     </div>
 
     <!-- Live Scrolling Ticker Tape -->
     <div class="ticker-wrapper">
-      <div class="ticker-label">⚡ LIVE TICKER</div>
+      <div class="ticker-label" id="tickerLabel">⚡ LIVE TICKER</div>
       <div class="ticker-scroll-area">
         <div class="ticker-track" id="tickerTrack">
           <span style="color: #94a3b8; font-size: 12px;">Loading live market prices...</span>
@@ -891,6 +978,18 @@ const server = http.createServer(async (req, res) => {
         const res = await fetch('/api/stocks');
         const data = await res.json();
         document.getElementById('updateTime').innerText = data.timestamp;
+
+        if (data.market) {
+          const mBadge = document.getElementById('marketBadge');
+          const mText = document.getElementById('marketBadgeText');
+          const mDetail = document.getElementById('marketDetailText');
+          const tLabel = document.getElementById('tickerLabel');
+
+          if (mBadge) mBadge.className = 'market-badge ' + data.market.badgeClass;
+          if (mText) mText.innerText = data.market.badgeText;
+          if (mDetail) mDetail.innerText = data.market.detail;
+          if (tLabel) tLabel.innerText = data.market.isOpen ? '⚡ LIVE TICKER' : '⏸️ LAST CLOSE';
+        }
 
         let bullCount = 0, bearCount = 0, neutralCount = 0;
 
