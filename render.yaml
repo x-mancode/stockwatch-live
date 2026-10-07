@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: stockwatch-live
+    env: node
+    plan: free
+    buildCommand: ""
+    startCommand: node live_web_server.js
