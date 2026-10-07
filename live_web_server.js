@@ -866,6 +866,102 @@ const server = http.createServer(async (req, res) => {
       .cards-grid { grid-template-columns: 1fr; max-height: calc(100vh - 250px); }
       .table-container { max-height: calc(100vh - 250px); }
     }
+
+    /* Help & Calculation Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 7, 18, 0.85);
+      backdrop-filter: blur(6px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-box {
+      background: #131b2e;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      max-width: 820px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 22px 24px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #1e293b;
+      padding-bottom: 12px;
+    }
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 22px;
+      cursor: pointer;
+      padding: 2px 8px;
+      border-radius: 6px;
+      transition: 0.2s;
+    }
+    .modal-close-btn:hover {
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.12);
+    }
+    .calc-card {
+      background: #0d1424;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .calc-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #38bdf8;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .calc-text {
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+    .calc-code {
+      background: #1e293b;
+      color: #f8fafc;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .calc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    @media (max-width: 640px) {
+      .calc-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -913,6 +1009,7 @@ const server = http.createServer(async (req, res) => {
       </form>
       <div class="btn-group">
         <button id="viewToggleBtn" onclick="toggleViewMode()" class="btn btn-secondary">📱 Cards View</button>
+        <button onclick="openHelpModal()" class="btn btn-secondary" title="View exact indicators and math formulas">❓ How It Calculates</button>
         <button onclick="fetchData()" class="btn btn-secondary">🔄 Refresh</button>
       </div>
     </div>
@@ -945,7 +1042,109 @@ const server = http.createServer(async (req, res) => {
     </div>
   </div>
 
+  <!-- Help & Quantitative Calculation Guide Modal -->
+  <div id="helpModal" class="modal-overlay" onclick="if(event.target===this)closeHelpModal()">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">📊 How Every Indicator & Signal is Calculated</div>
+        <button class="modal-close-btn" onclick="closeHelpModal()">✕</button>
+      </div>
+
+      <!-- Section 1: Regime -->
+      <div class="calc-card">
+        <div class="calc-card-title">1. Market Regime (Trending vs. Range-Bound)</div>
+        <p class="calc-text">
+          Uses <b>Kaufman's Efficiency Ratio (ER 14)</b> to detect whether a stock is in a trending wave or sideways consolidation:
+          <br><br>
+          <span class="calc-code">Efficiency Ratio = |Net Price Change over 14 Days| / Sum of Absolute Daily Swings</span>
+          <br><br>
+          • <b>TRENDING (ER ≥ 0.38)</b>: Clean directional momentum. System hunts trend-continuation pullbacks.<br>
+          • <b>RANGE-BOUND (ER &lt; 0.38)</b>: Choppy equilibrium. System hunts mean-reversion bounces off support/resistance.
+        </p>
+      </div>
+
+      <!-- Section 2: Score -->
+      <div class="calc-card">
+        <div class="calc-card-title">2. Quantitative Score (-100 to +100)</div>
+        <p class="calc-text">
+          Blends 4 institutional indicators:
+          <br>
+          • <b>Trend Alignment (40 pts)</b>: Direction vs 20 EMA and 200 EMA (Bullish if above, Bearish if below).<br>
+          • <b>Momentum (35 pts)</b>: RSI(14) expansion above/below 50 line.<br>
+          • <b>Smart Money Flow (20 pts)</b>: Chaikin Money Flow volume accumulation vs distribution.<br>
+          • <b>Mean Distance Z-Score (25 pts)</b>: Normalized distance to 20 EMA in terms of ATR (rewards value pullbacks).
+        </p>
+      </div>
+
+      <!-- Section 3: Signals -->
+      <div class="calc-card">
+        <div class="calc-card-title">3. Futures Action & Conviction Levels</div>
+        <div class="calc-grid">
+          <div style="background:#0b1120; padding:10px; border-radius:8px; border:1px solid rgba(34,197,94,0.3);">
+            <b style="color:#4ade80;">🟢 BUY FUTURE (Longs)</b>
+            <p class="calc-text" style="font-size:12px; margin-top:4px;">
+              • <b>Score ≥ +45</b>: High Conviction (Breakout expansion)<br>
+              • <b>Score +20 to +44</b>: Pullback Entry (Buying value dip at 20 EMA)
+            </p>
+          </div>
+          <div style="background:#0b1120; padding:10px; border-radius:8px; border:1px solid rgba(239,68,68,0.3);">
+            <b style="color:#f87171;">🔴 SELL / SHORT FUTURE (Shorts)</b>
+            <p class="calc-text" style="font-size:12px; margin-top:4px;">
+              • <b>Score ≤ -45</b>: High Conviction Short (Heavy institutional breakdown)<br>
+              • <b>Score -20 to -44</b>: Resistance Entry (Fading upper band)
+            </p>
+          </div>
+        </div>
+        <p class="calc-text" style="margin-top:8px;">
+          • <b>⚪ STAND ASIDE (Score -19 to +19)</b>: Market is in fair-value consolidation. Protects capital from whipsaws.
+        </p>
+      </div>
+
+      <!-- Section 4: Stop-Loss & Targets -->
+      <div class="calc-card">
+        <div class="calc-card-title">4. Dynamic Volatility-Based Stop-Loss & Targets (ATR)</div>
+        <p class="calc-text">
+          Uses <b>14-period Average True Range (ATR)</b> — measuring actual daily market volatility in Rupees:
+          <br><br>
+          <b>For BUY Trades (Long):</b><br>
+          • <span style="color:#fca5a5;">Stop-Loss</span> = <span class="calc-code">Live Price - (1.5 × ATR)</span> <i>(Places stop outside random intraday market noise)</i><br>
+          • <span style="color:#86efac;">Target 1</span> = <span class="calc-code">Live Price + (1.5 × ATR)</span> <i>(1:1 Risk-to-Reward)</i><br>
+          • <span style="color:#4ade80;">Target 2</span> = <span class="calc-code">Live Price + (3.0 × ATR)</span> <i>(1:2 High-Reward Runner)</i>
+          <br><br>
+          <b>For SHORT Trades (Selling Futures):</b><br>
+          • <span style="color:#fca5a5;">Stop-Loss</span> = <span class="calc-code">Live Price + (1.5 × ATR)</span> <i>(Placed above price to cap upside risk)</i><br>
+          • <span style="color:#86efac;">Target 1</span> = <span class="calc-code">Live Price - (1.5 × ATR)</span> <i>(1:1 Risk-to-Reward downside)</i><br>
+          • <span style="color:#4ade80;">Target 2</span> = <span class="calc-code">Live Price - (3.0 × ATR)</span> <i>(1:2 Breakdown Target)</i>
+        </p>
+      </div>
+
+      <!-- Section 5: Clock -->
+      <div class="calc-card">
+        <div class="calc-card-title">5. Official NSE Market Hours Schedule</div>
+        <p class="calc-text">
+          • <b>09:00 - 09:15 AM IST</b>: Pre-Market Order Matching.<br>
+          • <b>09:15 - 03:30 PM IST</b>: Live Continuous Regular Trading.<br>
+          • <b>Outside Market Hours</b>: Terminal displays verified previous day closing prices and sets status to <b>🔴 NSE CLOSED</b>.
+        </p>
+      </div>
+
+      <div style="text-align: right; padding-top: 8px;">
+        <button class="btn" onclick="closeHelpModal()">Close Guide</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    function openHelpModal() {
+      document.getElementById('helpModal').style.display = 'flex';
+    }
+    function closeHelpModal() {
+      document.getElementById('helpModal').style.display = 'none';
+    }
+    window.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeHelpModal();
+    });
+
     // State management: Card vs Table view
     let currentView = localStorage.getItem('stockwatch_view') || (window.innerWidth < 768 ? 'cards' : 'table');
 
