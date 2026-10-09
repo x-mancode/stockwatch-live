@@ -850,8 +850,14 @@
           </div>
 
           <!-- Trade Execution Log -->
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-            <h4 style="font-size: 14px; font-weight: 700; color: #cbd5e1;">📜 Closed Trade History</h4>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <h4 style="font-size: 14px; font-weight: 700; color: #cbd5e1;">📜 Closed Trade History</h4>
+              <div class="btn-group" style="display: inline-flex;">
+                <button id="btnFilterTodayTrades" class="btn btn-secondary active" style="font-size: 11px; padding: 4px 10px; min-height: 26px; border-color: #3b82f6; color: #38bdf8;" onclick="setTradeFilter('today')">⚡ Today's Trades Only</button>
+                <button id="btnFilterAllTrades" class="btn btn-secondary" style="font-size: 11px; padding: 4px 10px; min-height: 26px;" onclick="setTradeFilter('all')">All History</button>
+              </div>
+            </div>
             <button class="btn btn-secondary" style="font-size: 11px; padding: 4px 8px; min-height: 28px;" onclick="clearClosedTrades()">Clear Log</button>
           </div>
           <div class="table-container" style="max-height: 220px;">
@@ -1025,9 +1031,15 @@
         </div>
       </div>
 
-      <!-- Recent Sessions Verification Table -->
+      <!-- Bank Nifty Strategy Signal & Trade Log -->
       <div style="margin-bottom: 14px;">
-        <h3 style="font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 10px;">📅 Recent Sessions Signal Verification Log</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+          <h3 style="font-size: 15px; font-weight: 700; color: #fff;">📅 Bank Nifty Signal & Trade Verification</h3>
+          <div class="btn-group" style="display: inline-flex;">
+            <button id="btnSessionToday" class="btn btn-secondary active" style="font-size: 11px; padding: 4px 11px; min-height: 28px; border-color: #3b82f6; color: #38bdf8;" onclick="setSessionFilter('today')">⚡ Today's Trade Only</button>
+            <button id="btnSessionAll" class="btn btn-secondary" style="font-size: 11px; padding: 4px 11px; min-height: 28px;" onclick="setSessionFilter('all')">Last 15 Sessions</button>
+          </div>
+        </div>
         <div class="table-container" style="max-height: 280px;">
           <table>
             <thead>
@@ -1161,6 +1173,12 @@
         if (saved) {
           const parsed = JSON.parse(saved);
           paperState = { ...paperState, ...parsed };
+          const today = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+          if (Array.isArray(paperState.closedTrades)) {
+            paperState.closedTrades.forEach(t => {
+              if (!t.date) t.date = today;
+            });
+          }
         }
       } catch (e) {}
       document.getElementById('autoTradeToggle').checked = paperState.autoTradingEnabled;
@@ -1426,6 +1444,7 @@
         pts,
         netPL,
         exitReason,
+        date: new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
         timestamp: new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })
       });
 
@@ -1517,21 +1536,58 @@
       });
     }
 
+    // Closed Trades Filter State
+    let activeTradeFilter = 'today';
+
+    function setTradeFilter(filter) {
+      activeTradeFilter = filter;
+      const btnToday = document.getElementById('btnFilterTodayTrades');
+      const btnAll = document.getElementById('btnFilterAllTrades');
+      if (btnToday && btnAll) {
+        if (filter === 'today') {
+          btnToday.classList.add('active');
+          btnToday.style.borderColor = '#3b82f6';
+          btnToday.style.color = '#38bdf8';
+          btnAll.classList.remove('active');
+          btnAll.style.borderColor = '';
+          btnAll.style.color = '';
+        } else {
+          btnAll.classList.add('active');
+          btnAll.style.borderColor = '#3b82f6';
+          btnAll.style.color = '#38bdf8';
+          btnToday.classList.remove('active');
+          btnToday.style.borderColor = '';
+          btnToday.style.color = '';
+        }
+      }
+      renderClosedTrades();
+    }
+
     // Render Closed Trades Table
     function renderClosedTrades() {
       const tbody = document.getElementById('closedPositionsRows');
-      if (paperState.closedTrades.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: #64748b;">No closed trades recorded yet.</td></tr>';
+      if (!tbody) return;
+      const todayStr = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+      const listToRender = activeTradeFilter === 'today'
+        ? paperState.closedTrades.filter(t => !t.date || t.date === todayStr)
+        : paperState.closedTrades;
+
+      if (listToRender.length === 0) {
+        const msg = activeTradeFilter === 'today'
+          ? "No closed trades recorded today yet. (Click 'All History' to view earlier trades)"
+          : 'No closed trades recorded yet.';
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px; color: #64748b;">${msg}</td></tr>`;
         return;
       }
 
       tbody.innerHTML = '';
-      paperState.closedTrades.forEach(t => {
+      listToRender.forEach(t => {
         const plClass = t.netPL >= 0 ? 'up' : 'down';
         const plSign = t.netPL >= 0 ? '+' : '';
+        const dateTag = (activeTradeFilter === 'all' && t.date) ? `<br><span style="font-size:10px;color:#64748b;">${t.date}</span>` : '';
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td style="color: #94a3b8; font-size: 12px;">${t.timestamp}</td>
+          <td style="color: #94a3b8; font-size: 12px;">${t.timestamp}${dateTag}</td>
           <td><b>${t.symbol}</b></td>
           <td class="num">${t.qty}</td>
           <td class="num">₹${t.entryPrice.toFixed(2)}</td>
@@ -1570,6 +1626,63 @@
     // DATA FETCHER: BANK NIFTY STRATEGY API
     // ==============================================================================
     let liveBnfData = null;
+    let activeSessionFilter = 'today';
+
+    function setSessionFilter(filter) {
+      activeSessionFilter = filter;
+      const btnToday = document.getElementById('btnSessionToday');
+      const btnAll = document.getElementById('btnSessionAll');
+      if (btnToday && btnAll) {
+        if (filter === 'today') {
+          btnToday.classList.add('active');
+          btnToday.style.borderColor = '#3b82f6';
+          btnToday.style.color = '#38bdf8';
+          btnAll.classList.remove('active');
+          btnAll.style.borderColor = '';
+          btnAll.style.color = '';
+        } else {
+          btnAll.classList.add('active');
+          btnAll.style.borderColor = '#3b82f6';
+          btnAll.style.color = '#38bdf8';
+          btnToday.classList.remove('active');
+          btnToday.style.borderColor = '';
+          btnToday.style.color = '';
+        }
+      }
+      if (liveBnfData && liveBnfData.recentSessions) {
+        renderRecentSessions(liveBnfData.recentSessions);
+      }
+    }
+
+    function renderRecentSessions(sessions) {
+      const sessTbody = document.getElementById('bnfSessionRows');
+      if (!sessTbody || !sessions) return;
+      sessTbody.innerHTML = '';
+      const filtered = activeSessionFilter === 'today' ? sessions.slice(0, 1) : sessions;
+      filtered.forEach((s, idx) => {
+        const tr = document.createElement('tr');
+        const isSqueezeBadge = s.compressionSetup ? '<span class="badge" style="background:rgba(245,158,11,0.2);color:#fbbf24;border:1px solid rgba(245,158,11,0.4);">COILED SPRING</span>' : '<span style="color:#64748b;">Normal</span>';
+        let sigClass = '#94a3b8';
+        if (s.signal.includes('BUY')) sigClass = '#4ade80';
+        else if (s.signal.includes('SELL')) sigClass = '#f87171';
+        
+        const todayBadge = idx === 0 ? '<span class="badge" style="background:#1e3a8a;color:#93c5fd;font-size:10px;margin-left:6px;border:1px solid #3b82f6;">TODAY</span>' : '';
+
+        tr.innerHTML = `
+          <td><b>${s.date}</b>${todayBadge}</td>
+          <td class="num">₹${s.open.toLocaleString('en-IN')}</td>
+          <td class="num">₹${s.high.toLocaleString('en-IN')}</td>
+          <td class="num">₹${s.low.toLocaleString('en-IN')}</td>
+          <td class="num"><b>₹${s.close.toLocaleString('en-IN')}</b></td>
+          <td class="num">${s.range.toLocaleString('en-IN')} pts</td>
+          <td class="num">${s.atr.toLocaleString('en-IN')} pts</td>
+          <td>${isSqueezeBadge}</td>
+          <td style="color:${sigClass};font-weight:700;">${s.signal}</td>
+          <td style="color:#cbd5e1;font-size:12px;">${s.outcome}</td>
+        `;
+        sessTbody.appendChild(tr);
+      });
+    }
 
     async function fetchBankNiftyData() {
       try {
@@ -1648,29 +1761,7 @@
         recalculateTicket();
 
         // Populate Recent Sessions Table
-        const sessTbody = document.getElementById('bnfSessionRows');
-        sessTbody.innerHTML = '';
-        data.recentSessions.forEach(s => {
-          const tr = document.createElement('tr');
-          const isSqueezeBadge = s.compressionSetup ? '<span class="badge" style="background:rgba(245,158,11,0.2);color:#fbbf24;border:1px solid rgba(245,158,11,0.4);">COILED SPRING</span>' : '<span style="color:#64748b;">Normal</span>';
-          let sigClass = '#94a3b8';
-          if (s.signal.includes('BUY')) sigClass = '#4ade80';
-          else if (s.signal.includes('SELL')) sigClass = '#f87171';
-          
-          tr.innerHTML = `
-            <td><b>${s.date}</b></td>
-            <td class="num">₹${s.open.toLocaleString('en-IN')}</td>
-            <td class="num">₹${s.high.toLocaleString('en-IN')}</td>
-            <td class="num">₹${s.low.toLocaleString('en-IN')}</td>
-            <td class="num"><b>₹${s.close.toLocaleString('en-IN')}</b></td>
-            <td class="num">${s.range.toLocaleString('en-IN')} pts</td>
-            <td class="num">${s.atr.toLocaleString('en-IN')} pts</td>
-            <td>${isSqueezeBadge}</td>
-            <td style="color:${sigClass};font-weight:700;">${s.signal}</td>
-            <td style="color:#cbd5e1;font-size:12px;">${s.outcome}</td>
-          `;
-          sessTbody.appendChild(tr);
-        });
+        renderRecentSessions(data.recentSessions);
 
         // Feed tick to Paper Trading Engine
         updateLiveOptionPrices(data.live.price, data.live.curATR);

@@ -644,6 +644,7 @@
         <button type="submit" class="btn">+ Add</button>
       </form>
       <div class="btn-group">
+        <button id="filterActiveTradesBtn" onclick="toggleTodayTradesFilter()" class="btn btn-secondary" style="border-color: #3b82f6; color: #38bdf8;">⚡ Today's Trades Only</button>
         <button id="viewToggleBtn" onclick="toggleViewMode()" class="btn btn-secondary">📱 Cards View</button>
         <button onclick="openHelpModal()" class="btn btn-secondary">💡 How It Calculates</button>
         <button onclick="fetchData()" class="btn btn-secondary">🔄 Refresh</button>
@@ -792,127 +793,170 @@
     applyViewMode();
 
     let isFetching = false;
+    let todayTradesOnly = false;
+    let lastStocksData = null;
+
+    function toggleTodayTradesFilter() {
+      todayTradesOnly = !todayTradesOnly;
+      const btn = document.getElementById('filterActiveTradesBtn');
+      if (todayTradesOnly) {
+        btn.classList.add('active');
+        btn.style.borderColor = '#22c55e';
+        btn.style.color = '#4ade80';
+        btn.style.background = 'rgba(34, 197, 94, 0.15)';
+        btn.innerHTML = "⚡ Today's Trades Only (Active)";
+      } else {
+        btn.classList.remove('active');
+        btn.style.borderColor = '#3b82f6';
+        btn.style.color = '#38bdf8';
+        btn.style.background = '';
+        btn.innerHTML = "⚡ Today's Trades Only";
+      }
+      if (lastStocksData) {
+        renderStocks(lastStocksData);
+      }
+    }
+
     async function fetchData() {
       if (isFetching) return;
       isFetching = true;
       try {
         const res = await fetch('/api/stocks');
         const data = await res.json();
-        document.getElementById('updateTime').innerText = data.timestamp;
-
-        if (data.market) {
-          const mBadge = document.getElementById('marketBadge');
-          const mText = document.getElementById('marketBadgeText');
-          const mDetail = document.getElementById('marketDetailText');
-          const tLabel = document.getElementById('tickerLabel');
-
-          if (mBadge) mBadge.className = 'market-badge ' + data.market.badgeClass;
-          if (mText) mText.innerText = data.market.badgeText;
-          if (mDetail) mDetail.innerText = data.market.detail;
-          if (tLabel) tLabel.innerText = data.market.isOpen ? '⚡ LIVE TICKER' : '⏸️ LAST CLOSE';
-        }
-
-        let bullCount = 0, bearCount = 0, neutralCount = 0;
-        const tbody = document.getElementById('stockRows');
-        tbody.innerHTML = '';
-        const cardsContainer = document.getElementById('cardsView');
-        cardsContainer.innerHTML = '';
-
-        // 1. Ticker Tape
-        const tickerTrack = document.getElementById('tickerTrack');
-        if (tickerTrack && data.stocks.length > 0) {
-          let tickerHtml = '';
-          const loopedStocks = [...data.stocks, ...data.stocks];
-          loopedStocks.forEach(s => {
-            const chgClass = s.changePct >= 0 ? 'up' : 'down';
-            const chgSign = s.changePct >= 0 ? '+' : '';
-            tickerHtml += `<span class="ticker-item"><b>${s.symbol}</b> <span class="num">₹${s.price.toFixed(2)}</span> <span class="${chgClass} num">(${chgSign}${s.changePct.toFixed(2)}%)</span></span><span style="color:#334155;">&bull;</span>`;
-          });
-          tickerTrack.innerHTML = tickerHtml;
-        }
-
-        // 2. Rows and Cards
-        data.stocks.forEach(s => {
-          const isShort = s.signal.includes('SHORT');
-          const isLong = s.signal.includes('LONG');
-          if (isLong) bullCount++;
-          else if (isShort) bearCount++;
-          else neutralCount++;
-
-          const badgeClass = isShort ? 'badge-short' : (isLong ? 'badge-buy' : 'badge-hold');
-          const chgClass = s.changePct >= 0 ? 'up' : 'down';
-          const chgSign = s.changePct >= 0 ? '+' : '';
-
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td><b>${s.symbol}</b></td>
-            <td class="num"><b>₹${s.price.toFixed(2)}</b></td>
-            <td class="${chgClass} num">${chgSign}${s.changePct.toFixed(2)}%</td>
-            <td><span class="badge ${badgeClass}">${s.tradeAction}</span></td>
-            <td class="num" style="font-weight: 600;">${s.score > 0 ? '+' : ''}${s.score}</td>
-            <td class="num" style="color: #fca5a5;"><b>₹${s.stopLoss.toFixed(2)}</b> (${s.slPct}%)</td>
-            <td class="num" style="color: #86efac;">₹${s.target1.toFixed(2)}</td>
-            <td class="num" style="color: #4ade80;"><b>₹${s.target2.toFixed(2)}</b></td>
-            <td style="color: #94a3b8; font-size: 12px;">${s.regime}</td>
-            <td style="color: #94a3b8; font-size: 12px;">${s.rationale}</td>
-            <td><button class="del-btn" title="Remove" onclick="deleteStock('${s.symbol}')">✕</button></td>
-          `;
-          tbody.appendChild(tr);
-
-          const card = document.createElement('div');
-          card.className = 'stock-card';
-          card.innerHTML = `
-            <div class="card-top">
-              <div class="card-symbol-block">
-                <span class="card-symbol">${s.symbol}</span>
-                <span class="card-company">${s.name}</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <div class="card-price-block">
-                  <span class="card-price num">₹${s.price.toFixed(2)}</span>
-                  <span class="card-chg ${chgClass} num">${chgSign}${s.changePct.toFixed(2)}%</span>
-                </div>
-                <button class="del-btn" title="Remove" onclick="deleteStock('${s.symbol}')">✕</button>
-              </div>
-            </div>
-            <div class="card-action-bar">
-              <span class="badge ${badgeClass}">${s.tradeAction}</span>
-              <span class="num" style="font-size: 12px; font-weight: 700; color: ${s.score >= 0 ? '#4ade80' : '#f87171'}">Score ${s.score > 0 ? '+' : ''}${s.score}</span>
-            </div>
-            <div class="card-levels-grid">
-              <div class="level-box sl">
-                <div class="level-label">Stop-Loss</div>
-                <div class="level-val num">₹${s.stopLoss.toFixed(2)}</div>
-                <div class="level-sub num">${s.slPct}%</div>
-              </div>
-              <div class="level-box t1">
-                <div class="level-label">Target 1</div>
-                <div class="level-val num">₹${s.target1.toFixed(2)}</div>
-                <div class="level-sub">1:1 R:R</div>
-              </div>
-              <div class="level-box t2">
-                <div class="level-label">Target 2</div>
-                <div class="level-val num">₹${s.target2.toFixed(2)}</div>
-                <div class="level-sub">1:2 R:R</div>
-              </div>
-            </div>
-            <div class="card-rationale">"${s.rationale}"</div>
-            <div class="card-footer">
-              <span>${s.regime}</span>
-              <span class="num">RSI ${s.rsi} &bull; ATR ₹${s.atr.toFixed(2)}</span>
-            </div>
-          `;
-          cardsContainer.appendChild(card);
-        });
-
-        document.getElementById('statBull').innerText = bullCount + ' Longs';
-        document.getElementById('statBear').innerText = bearCount + ' Shorts';
-        document.getElementById('statNeutral').innerText = neutralCount + ' Neutral';
+        lastStocksData = data;
+        renderStocks(data);
       } catch (err) {
         console.error(err);
       } finally {
         isFetching = false;
       }
+    }
+
+    function renderStocks(data) {
+      if (!data) return;
+      document.getElementById('updateTime').innerText = data.timestamp;
+
+      if (data.market) {
+        const mBadge = document.getElementById('marketBadge');
+        const mText = document.getElementById('marketBadgeText');
+        const mDetail = document.getElementById('marketDetailText');
+        const tLabel = document.getElementById('tickerLabel');
+
+        if (mBadge) mBadge.className = 'market-badge ' + data.market.badgeClass;
+        if (mText) mText.innerText = data.market.badgeText;
+        if (mDetail) mDetail.innerText = data.market.detail;
+        if (tLabel) tLabel.innerText = data.market.isOpen ? '⚡ LIVE TICKER' : '⏸️ LAST CLOSE';
+      }
+
+      let bullCount = 0, bearCount = 0, neutralCount = 0;
+      data.stocks.forEach(s => {
+        if (s.signal.includes('LONG')) bullCount++;
+        else if (s.signal.includes('SHORT')) bearCount++;
+        else neutralCount++;
+      });
+
+      document.getElementById('statBull').innerText = bullCount + ' Longs';
+      document.getElementById('statBear').innerText = bearCount + ' Shorts';
+      document.getElementById('statNeutral').innerText = neutralCount + ' Neutral';
+
+      // 1. Ticker Tape
+      const tickerTrack = document.getElementById('tickerTrack');
+      if (tickerTrack && data.stocks.length > 0) {
+        let tickerHtml = '';
+        const loopedStocks = [...data.stocks, ...data.stocks];
+        loopedStocks.forEach(s => {
+          const chgClass = s.changePct >= 0 ? 'up' : 'down';
+          const chgSign = s.changePct >= 0 ? '+' : '';
+          tickerHtml += `<span class="ticker-item"><b>${s.symbol}</b> <span class="num">₹${s.price.toFixed(2)}</span> <span class="${chgClass} num">(${chgSign}${s.changePct.toFixed(2)}%)</span></span><span style="color:#334155;">&bull;</span>`;
+        });
+        tickerTrack.innerHTML = tickerHtml;
+      }
+
+      // Filter visible stocks if todayTradesOnly is enabled
+      const visibleStocks = todayTradesOnly
+        ? data.stocks.filter(s => s.signal.includes('LONG') || s.signal.includes('SHORT'))
+        : data.stocks;
+
+      const tbody = document.getElementById('stockRows');
+      tbody.innerHTML = '';
+      const cardsContainer = document.getElementById('cardsView');
+      cardsContainer.innerHTML = '';
+
+      if (visibleStocks.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 30px; color: #94a3b8;">No directional trades triggered today. All monitored stocks are currently in consolidation (STAND ASIDE).</td></tr>';
+        cardsContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #94a3b8; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color);">No directional trades triggered today. All monitored stocks are currently in consolidation (STAND ASIDE).</div>';
+        return;
+      }
+
+      // 2. Rows and Cards
+      visibleStocks.forEach(s => {
+        const isShort = s.signal.includes('SHORT');
+        const isLong = s.signal.includes('LONG');
+        const badgeClass = isShort ? 'badge-short' : (isLong ? 'badge-buy' : 'badge-hold');
+        const chgClass = s.changePct >= 0 ? 'up' : 'down';
+        const chgSign = s.changePct >= 0 ? '+' : '';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><b>${s.symbol}</b></td>
+          <td class="num"><b>₹${s.price.toFixed(2)}</b></td>
+          <td class="${chgClass} num">${chgSign}${s.changePct.toFixed(2)}%</td>
+          <td><span class="badge ${badgeClass}">${s.tradeAction}</span></td>
+          <td class="num" style="font-weight: 600;">${s.score > 0 ? '+' : ''}${s.score}</td>
+          <td class="num" style="color: #fca5a5;"><b>₹${s.stopLoss.toFixed(2)}</b> (${s.slPct}%)</td>
+          <td class="num" style="color: #86efac;">₹${s.target1.toFixed(2)}</td>
+          <td class="num" style="color: #4ade80;"><b>₹${s.target2.toFixed(2)}</b></td>
+          <td style="color: #94a3b8; font-size: 12px;">${s.regime}</td>
+          <td style="color: #94a3b8; font-size: 12px;">${s.rationale}</td>
+          <td><button class="del-btn" title="Remove" onclick="deleteStock('${s.symbol}')">✕</button></td>
+        `;
+        tbody.appendChild(tr);
+
+        const card = document.createElement('div');
+        card.className = 'stock-card';
+        card.innerHTML = `
+          <div class="card-top">
+            <div class="card-symbol-block">
+              <span class="card-symbol">${s.symbol}</span>
+              <span class="card-company">${s.name}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div class="card-price-block">
+                <span class="card-price num">₹${s.price.toFixed(2)}</span>
+                <span class="card-chg ${chgClass} num">${chgSign}${s.changePct.toFixed(2)}%</span>
+              </div>
+              <button class="del-btn" title="Remove" onclick="deleteStock('${s.symbol}')">✕</button>
+            </div>
+          </div>
+          <div class="card-action-bar">
+            <span class="badge ${badgeClass}">${s.tradeAction}</span>
+            <span class="num" style="font-size: 12px; font-weight: 700; color: ${s.score >= 0 ? '#4ade80' : '#f87171'}">Score ${s.score > 0 ? '+' : ''}${s.score}</span>
+          </div>
+          <div class="card-levels-grid">
+            <div class="level-box sl">
+              <div class="level-label">Stop-Loss</div>
+              <div class="level-val num">₹${s.stopLoss.toFixed(2)}</div>
+              <div class="level-sub num">${s.slPct}%</div>
+            </div>
+            <div class="level-box t1">
+              <div class="level-label">Target 1</div>
+              <div class="level-val num">₹${s.target1.toFixed(2)}</div>
+              <div class="level-sub">1:1 R:R</div>
+            </div>
+            <div class="level-box t2">
+              <div class="level-label">Target 2</div>
+              <div class="level-val num">₹${s.target2.toFixed(2)}</div>
+              <div class="level-sub">1:2 R:R</div>
+            </div>
+          </div>
+          <div class="card-rationale">"${s.rationale}"</div>
+          <div class="card-footer">
+            <span>${s.regime}</span>
+            <span class="num">RSI ${s.rsi} &bull; ATR ₹${s.atr.toFixed(2)}</span>
+          </div>
+        `;
+        cardsContainer.appendChild(card);
+      });
     }
 
     async function addStock(e) {
