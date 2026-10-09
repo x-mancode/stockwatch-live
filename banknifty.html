@@ -355,6 +355,16 @@
     }
     @media (max-width: 992px) {
       .trading-layout { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    }
+    @media (max-width: 600px) {
+      .container { padding: 10px 10px 30px 10px !important; }
+      .brand-title { font-size: 15px !important; }
+      .nav-tabs { width: 100%; overflow-x: auto; padding-bottom: 3px; }
+      .nav-tab-btn, .nav-tab-link { font-size: 11px !important; padding: 5px 10px !important; white-space: nowrap; }
+      .kpi-grid { grid-template-columns: 1fr !important; }
+      .bnf-metrics-row { flex-direction: column; gap: 6px; align-items: flex-start; }
+      .bt-range-btn { white-space: nowrap; }
     }
 
     /* Manual Order Ticket */

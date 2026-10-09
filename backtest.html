@@ -360,10 +360,52 @@
       .kpi-grid {
         grid-template-columns: repeat(2, 1fr);
       }
+      .params-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
     @media (max-width: 600px) {
+      .container {
+        padding: 10px 10px 30px 10px;
+        gap: 10px;
+      }
+      .brand-title {
+        font-size: 15px;
+      }
+      .top-bar {
+        gap: 8px;
+      }
+      .nav-tabs {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 2px;
+      }
+      .nav-tab-link {
+        font-size: 11px;
+        padding: 5px 10px;
+        white-space: nowrap;
+      }
+      .preset-bar {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 4px;
+      }
+      .preset-btn {
+        white-space: nowrap;
+      }
+      .params-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
       .kpi-grid {
         grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      .prompt-box {
+        font-size: 12px;
+      }
+      #btnRunBacktest {
+        width: 100%;
       }
     }
   </style>
@@ -1030,9 +1072,15 @@ if (isEOD)
       setTimeout(() => { el.style.display = 'none'; }, 2800);
     }
 
-    // Auto-run on load
+    // Auto-run on load & handle resize
     window.addEventListener('DOMContentLoaded', () => {
       runBacktestEngine();
+    });
+
+    window.addEventListener('resize', () => {
+      if (currentBacktestData && currentBacktestData.equityCurve) {
+        renderEquityChart(currentBacktestData.equityCurve);
+      }
     });
   </script>
 </body>
