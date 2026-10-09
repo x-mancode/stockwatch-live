@@ -202,6 +202,26 @@
       color: #cbd5e1;
     }
     .btn-secondary:hover { background: #334155; color: #fff; }
+    .btn-success {
+      background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+      color: #fff;
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      font-weight: 700;
+    }
+    .btn-success:hover {
+      background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35);
+    }
+    .btn-stop {
+      background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%);
+      color: #fff;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      font-weight: 700;
+    }
+    .btn-stop:hover {
+      background: linear-gradient(135deg, #b91c1c 0%, #ef4444 100%);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+    }
     .btn-danger {
       background: rgba(239, 68, 68, 0.2);
       border: 1px solid rgba(239, 68, 68, 0.4);
@@ -706,29 +726,44 @@
         <div class="autotrade-info">
           <div class="autotrade-title">
             <span>🤖 QUANT AUTO-TRADE BOT (BANK NIFTY OPTIONS)</span>
-            <span class="badge" id="autoStatusBadge" style="background: rgba(148,163,184,0.15); color: #94a3b8;">STANDBY</span>
+            <span class="badge" id="autoStatusBadge" style="background: rgba(148,163,184,0.15); color: #94a3b8;">⚪ STANDBY (STOPPED)</span>
           </div>
           <div class="autotrade-desc">
-            When enabled, the bot automatically buys <b>ATM Call (CE)</b> on Bullish Breakout (&gt; Prev High) or <b>ATM Put (PE)</b> on Bearish Breakdown (&lt; Prev Low) whenever the Coiled Squeeze compression setup triggers. Exits automatically on Target or Stop-Loss!
+            ⚡ <b>Instant Execution on Start</b>: When you click <b>Start Auto-Trade</b>, the bot immediately takes an <b>ATM Call (CE)</b> or <b>ATM Put (PE)</b> paper trade aligned with market momentum, and continuously monitors live Stop-Loss and Target exits!
           </div>
         </div>
 
         <div class="autotrade-controls">
           <div style="display: flex; flex-direction: column; gap: 4px;">
-            <label style="font-size: 11px; color: #93c5fd; font-weight: 700;">AUTO LOTS:</label>
-            <select id="autoLotSelect" class="form-select" style="padding: 6px 10px; width: 140px;">
-              <option value="1">1 Lot (15 Qty)</option>
-              <option value="2">2 Lots (30 Qty)</option>
-              <option value="3">3 Lots (45 Qty)</option>
+            <label style="font-size: 11px; color: #93c5fd; font-weight: 700;">BOT BIAS:</label>
+            <select id="autoBiasSelect" class="form-select" style="padding: 6px 10px; width: 165px; font-size: 12px;">
+              <option value="AUTO" selected>🤖 Auto (Follow Momentum)</option>
+              <option value="CE">🟢 CALL (CE) Only</option>
+              <option value="PE">🔴 PUT (PE) Only</option>
             </select>
           </div>
 
-          <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-            <span style="font-size: 11px; color: #93c5fd; font-weight: 700;">AUTO-TRADE</span>
-            <label class="toggle-switch">
-              <input type="checkbox" id="autoTradeToggle" onchange="toggleAutoTrading(this.checked)">
-              <span class="toggle-slider"></span>
-            </label>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 11px; color: #93c5fd; font-weight: 700;">AUTO LOTS:</label>
+            <select id="autoLotSelect" class="form-select" style="padding: 6px 10px; width: 130px; font-size: 12px;">
+              <option value="1">1 Lot (15 Qty)</option>
+              <option value="2">2 Lots (30 Qty)</option>
+              <option value="3">3 Lots (45 Qty)</option>
+              <option value="5">5 Lots (75 Qty)</option>
+            </select>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button id="btnStartAutoTrade" class="btn btn-success" style="font-size: 13px; padding: 9px 18px; min-height: 38px;" onclick="toggleAutoTrading(!paperState.autoTradingEnabled)">
+              ▶️ Start Auto-Trade
+            </button>
+            <button id="btnTakeTradeNow" class="btn btn-secondary" style="font-size: 12px; padding: 9px 12px; min-height: 38px; border-color: #3b82f6; color: #38bdf8;" onclick="executeAutoTrade('Manual Instant Trigger ⚡')" title="Take an automated trade right now">
+              ⚡ Take Trade Now
+            </button>
+          </div>
+
+          <div style="display: none;">
+            <input type="checkbox" id="autoTradeToggle" onchange="toggleAutoTrading(this.checked)">
           </div>
         </div>
       </div>
@@ -1306,116 +1341,162 @@
       renderPositions();
     }
 
-    // Auto Trading Toggle
-    function toggleAutoTrading(enabled) {
-      paperState.autoTradingEnabled = enabled;
-      paperState.autoLots = parseInt(document.getElementById('autoLotSelect').value, 10) || 1;
-      savePaperState();
-      updateAutoStatusBadge();
-      if (enabled) {
-        showToast('Auto-Trade Bot Active: Scanning for Breakouts!', '🤖');
-      } else {
-        showToast('Auto-Trade Bot Disabled', '⏸️');
-      }
-    }
-
+    // Auto Trading Controller & Execution Engine
     function updateAutoStatusBadge() {
       const badge = document.getElementById('autoStatusBadge');
+      const btn = document.getElementById('btnStartAutoTrade');
+      const toggle = document.getElementById('autoTradeToggle');
+      const openCount = paperState.positions.filter(p => p.mode === 'AUTO').length;
+
+      if (toggle) toggle.checked = paperState.autoTradingEnabled;
+
       if (paperState.autoTradingEnabled) {
-        badge.className = 'badge badge-buy';
-        badge.innerText = '🟢 ACTIVE SCANNING';
+        if (openCount > 0) {
+          if (badge) {
+            badge.className = 'badge badge-buy';
+            badge.innerText = `🟢 RUNNING (${openCount} POSITION ACTIVE)`;
+          }
+        } else {
+          if (badge) {
+            badge.className = 'badge badge-buy';
+            badge.innerText = '🟢 ACTIVE SCANNING';
+          }
+        }
+        if (btn) {
+          btn.className = 'btn btn-stop';
+          btn.innerHTML = '⏹️ Stop Auto-Trade';
+        }
       } else {
-        badge.className = 'badge badge-hold';
-        badge.innerText = '⚪ STANDBY';
+        if (badge) {
+          badge.className = 'badge badge-hold';
+          badge.innerText = '⚪ STANDBY (STOPPED)';
+        }
+        if (btn) {
+          btn.className = 'btn btn-success';
+          btn.innerHTML = '▶️ Start Auto-Trade';
+        }
       }
     }
 
-    // Check Auto-Trading Breakout Triggers
+    async function toggleAutoTrading(enabled) {
+      paperState.autoTradingEnabled = enabled;
+      paperState.autoLots = parseInt(document.getElementById('autoLotSelect')?.value, 10) || 1;
+      savePaperState();
+      updateAutoStatusBadge();
+
+      if (enabled) {
+        showToast('🤖 Auto-Trade Bot Started!', '🚀');
+        // If no open positions, IMMEDIATELY execute an automated trade!
+        if (paperState.positions.length === 0) {
+          await executeAutoTrade('Auto-Bot Start Trigger ⚡');
+        } else {
+          showToast(`🤖 Auto-Bot Active: Managing ${paperState.positions.length} open position(s) with live exits!`, '⚡');
+        }
+      } else {
+        showToast('Auto-Trade Bot Stopped (Standby)', '⏸️');
+      }
+    }
+
+    // Execute Automated Trade Immediately
+    async function executeAutoTrade(reason = 'Auto-Bot Start Trigger ⚡') {
+      if (!liveBnfData || !liveBnfData.live) {
+        try {
+          await fetchBankNiftyData();
+        } catch (e) {}
+      }
+
+      if (!liveBnfData || !liveBnfData.live) {
+        showToast('Market data unavailable for Auto-Trade. Please retry.', '⚠️');
+        return;
+      }
+
+      const spot = liveBnfData.live.price;
+      const atr = liveBnfData.live.curATR;
+      const strike = liveBnfData.setup ? liveBnfData.setup.atmStrike : Math.round(spot / 100) * 100;
+      const lots = paperState.autoLots || parseInt(document.getElementById('autoLotSelect')?.value, 10) || 1;
+      const qty = lots * 15;
+
+      // Determine option type (CE or PE)
+      let optType = 'CE';
+      const biasSelect = document.getElementById('autoBiasSelect')?.value || 'AUTO';
+      if (biasSelect === 'CE') {
+        optType = 'CE';
+      } else if (biasSelect === 'PE') {
+        optType = 'PE';
+      } else {
+        // AUTO Mode: Check strategy signal first, else check intraday momentum
+        const sigType = liveBnfData.setup?.signalType;
+        if (sigType === 'BUY') {
+          optType = 'CE';
+        } else if (sigType === 'SELL') {
+          optType = 'PE';
+        } else {
+          // Trend Momentum Bias: positive change or price >= open means Call (CE), else Put (PE)
+          optType = liveBnfData.live.changePts >= 0 ? 'CE' : 'PE';
+        }
+      }
+
+      // Check if same type position is already open to avoid over-concentration
+      const hasSameType = paperState.positions.some(p => p.type === optType);
+      if (hasSameType) {
+        showToast(`🤖 Auto-Bot: Position in ${optType} is already active! Managing live trade.`, 'ℹ️');
+        return;
+      }
+
+      const entryPrem = estimateOptionPremium(spot, strike, optType, atr);
+      const marginReq = entryPrem * qty;
+
+      if (paperState.balance < marginReq) {
+        showToast(`⚠️ Insufficient balance for Auto-Trade (Needs ₹${marginReq.toLocaleString('en-IN')})`, '⚠️');
+        return;
+      }
+
+      // Volatility-calibrated SL & Target (35% SL, 65% Target)
+      const slPrice = Math.round(entryPrem * 0.65 * 10) / 10;
+      const tpPrice = Math.round(entryPrem * 1.65 * 10) / 10;
+
+      const pos = {
+        id: 'AUTO_' + Date.now(),
+        symbol: `BANKNIFTY ${strike} ${optType}`,
+        strike,
+        type: optType,
+        qty,
+        lots,
+        entryPrice: entryPrem,
+        currentPrice: entryPrem,
+        slPrice,
+        tpPrice,
+        mode: 'AUTO',
+        reason,
+        date: new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+        timestamp: new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })
+      };
+
+      paperState.balance -= marginReq;
+      paperState.invested += marginReq;
+      paperState.positions.push(pos);
+      paperState.lastAutoSignalProcessed = optType;
+      savePaperState();
+
+      playAudioTone('buy');
+      showToast(`🤖 Auto-Trade Taken: Bought ${pos.symbol} @ ₹${entryPrem.toFixed(2)} (${qty} Qty)!`, '⚡');
+      renderPortfolioHUD();
+      renderPositions();
+      updateAutoStatusBadge();
+    }
+
+    // Check Auto-Trading Breakout Triggers on every live data tick
     function checkAutoTradeTriggers(data) {
       if (!paperState.autoTradingEnabled || !data || !data.setup) return;
 
+      // If a position is already open, the tick engine is actively managing it
+      if (paperState.positions.length > 0) return;
+
       const sigType = data.setup.signalType;
-      const spot = data.live.price;
-      const atr = data.live.curATR;
-      const strike = data.setup.atmStrike;
-      const lots = paperState.autoLots || 1;
-      const qty = lots * 15;
-
-      // Avoid executing duplicate trade for same signal wave
-      if (paperState.lastAutoSignalProcessed === sigType) return;
-
-      if (sigType === 'BUY') {
-        const hasOpenLong = paperState.positions.some(p => p.type === 'CE');
-        if (!hasOpenLong) {
-          const entryPrem = estimateOptionPremium(spot, strike, 'CE', atr);
-          const marginReq = entryPrem * qty;
-          if (paperState.balance >= marginReq) {
-            const slPrice = Math.round(entryPrem * 0.65 * 10) / 10;
-            const tpPrice = Math.round(entryPrem * 1.65 * 10) / 10;
-
-            const pos = {
-              id: 'AUTO_' + Date.now(),
-              symbol: `BANKNIFTY ${strike} CE`,
-              strike,
-              type: 'CE',
-              qty,
-              lots,
-              entryPrice: entryPrem,
-              currentPrice: entryPrem,
-              slPrice,
-              tpPrice,
-              mode: 'AUTO',
-              timestamp: new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })
-            };
-
-            paperState.balance -= marginReq;
-            paperState.invested += marginReq;
-            paperState.positions.push(pos);
-            paperState.lastAutoSignalProcessed = 'BUY';
-            savePaperState();
-
-            playAudioTone('buy');
-            showToast(`🤖 Auto-Bot Bought ${pos.symbol} @ ₹${entryPrem.toFixed(2)}`, '⚡');
-            renderPortfolioHUD();
-            renderPositions();
-          }
-        }
-      } else if (sigType === 'SELL') {
-        const hasOpenShort = paperState.positions.some(p => p.type === 'PE');
-        if (!hasOpenShort) {
-          const entryPrem = estimateOptionPremium(spot, strike, 'PE', atr);
-          const marginReq = entryPrem * qty;
-          if (paperState.balance >= marginReq) {
-            const slPrice = Math.round(entryPrem * 0.65 * 10) / 10;
-            const tpPrice = Math.round(entryPrem * 1.65 * 10) / 10;
-
-            const pos = {
-              id: 'AUTO_' + Date.now(),
-              symbol: `BANKNIFTY ${strike} PE`,
-              strike,
-              type: 'PE',
-              qty,
-              lots,
-              entryPrice: entryPrem,
-              currentPrice: entryPrem,
-              slPrice,
-              tpPrice,
-              mode: 'AUTO',
-              timestamp: new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })
-            };
-
-            paperState.balance -= marginReq;
-            paperState.invested += marginReq;
-            paperState.positions.push(pos);
-            paperState.lastAutoSignalProcessed = 'SELL';
-            savePaperState();
-
-            playAudioTone('buy');
-            showToast(`🤖 Auto-Bot Bought ${pos.symbol} @ ₹${entryPrem.toFixed(2)}`, '⚡');
-            renderPortfolioHUD();
-            renderPositions();
-          }
-        }
+      if (sigType === 'BUY' && paperState.lastAutoSignalProcessed !== 'BUY') {
+        executeAutoTrade('Breakout BUY Signal 🟢');
+      } else if (sigType === 'SELL' && paperState.lastAutoSignalProcessed !== 'SELL') {
+        executeAutoTrade('Breakdown SELL Signal 🔴');
       }
     }
 
@@ -1457,6 +1538,7 @@
       renderPortfolioHUD();
       renderPositions();
       renderClosedTrades();
+      updateAutoStatusBadge();
     }
 
     function squareOffAll() {
