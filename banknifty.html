@@ -686,66 +686,65 @@
     <!-- ============================================================================== -->
     <!-- TAB 1: DUMMY / PAPER TRADING (OPTIONS AUTO & MANUAL) -->
     <!-- ============================================================================== -->
+    <!-- ============================================================================== -->
+    <!-- TAB 1: DUMMY / PAPER TRADING (OPTIONS AUTO & MANUAL) -->
+    <!-- ============================================================================== -->
     <div id="tabPaperView">
-      <!-- Virtual Portfolio HUD -->
-      <div class="portfolio-grid">
+      <!-- Minimalist 3-Metric Portfolio Strip -->
+      <div class="portfolio-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 12px;">
         <div class="portfolio-card" style="border-top: 3px solid #38bdf8;">
-          <span class="portfolio-label">Virtual Capital</span>
-          <span class="portfolio-val num" id="portBalance">₹5,00,000</span>
-          <span class="portfolio-sub">Starting Margin</span>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="portfolio-label">Overall P&L</span>
+            <span style="font-size: 11px; color: #94a3b8;">Total Return</span>
+          </div>
+          <div class="portfolio-val num" id="portTotalPL" style="font-size: 26px; font-weight: 800; color: #94a3b8;">₹0.00</div>
+          <div class="portfolio-sub" style="display: flex; gap: 12px;">
+            <span>Live: <b class="num" id="portUnrealized" style="color: #94a3b8;">₹0.00</b></span>
+            <span>Booked: <b class="num" id="portRealized" style="color: #94a3b8;">₹0.00</b></span>
+          </div>
         </div>
+
         <div class="portfolio-card" style="border-top: 3px solid #22c55e;">
-          <span class="portfolio-label">Available Cash</span>
-          <span class="portfolio-val num up" id="portAvailable">₹5,00,000</span>
-          <span class="portfolio-sub">Free for new trades</span>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="portfolio-label">Available Cash</span>
+            <button class="btn btn-secondary" style="font-size: 10px; padding: 2px 8px; min-height: 22px;" onclick="resetPaperAccount()">🔄 Reset</button>
+          </div>
+          <div class="portfolio-val num up" id="portAvailable" style="font-size: 26px; font-weight: 800;">₹5,00,000</div>
+          <div class="portfolio-sub">
+            Invested: <b class="num" id="portInvested" style="color: #cbd5e1;">₹0</b> &bull; Total: <span class="num" id="portBalance" style="color: #64748b;">₹5,00,000</span>
+          </div>
         </div>
-        <div class="portfolio-card" style="border-top: 3px solid #a855f7;">
-          <span class="portfolio-label">Invested in Options</span>
-          <span class="portfolio-val num" id="portInvested">₹0</span>
-          <span class="portfolio-sub">Capital in Open Positions</span>
-        </div>
-        <div class="portfolio-card" style="border-top: 3px solid #fbbf24;">
-          <span class="portfolio-label">Unrealized P&L</span>
-          <span class="portfolio-val num" id="portUnrealized" style="color: #94a3b8;">₹0.00</span>
-          <span class="portfolio-sub">Live Open Positions P&L</span>
-        </div>
-        <div class="portfolio-card" style="border-top: 3px solid #34d399;">
-          <span class="portfolio-label">Realized P&L</span>
-          <span class="portfolio-val num" id="portRealized" style="color: #94a3b8;">₹0.00</span>
-          <span class="portfolio-sub">Booked Profits / Losses</span>
-        </div>
+
         <div class="portfolio-card" style="border-top: 3px solid #f59e0b;">
-          <span class="portfolio-label">Paper Trade Stats</span>
-          <span class="portfolio-val num" id="portWinRate">0%</span>
-          <span class="portfolio-sub" id="portTradesCount">0 Trades Closed</span>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="portfolio-label">Performance</span>
+            <span style="font-size: 11px; color: #94a3b8;">Today</span>
+          </div>
+          <div class="portfolio-val num" id="portWinRate" style="font-size: 26px; font-weight: 800; color: #fbbf24;">0%</div>
+          <div class="portfolio-sub" id="portTradesCount" style="color: #cbd5e1;">0 Closed Trades</div>
         </div>
       </div>
 
-      <!-- Auto-Trading Mode Controller Banner -->
-      <div class="autotrade-card">
-        <div class="autotrade-info">
-          <div class="autotrade-title">
-            <span>🤖 QUANT AUTO-TRADE BOT (BANK NIFTY OPTIONS)</span>
-            <span class="badge" id="autoStatusBadge" style="background: rgba(148,163,184,0.15); color: #94a3b8;">⚪ STANDBY (STOPPED)</span>
-          </div>
-          <div class="autotrade-desc">
-            ⚡ <b>Instant Execution on Start</b>: When you click <b>Start Auto-Trade</b>, the bot immediately takes an <b>ATM Call (CE)</b> or <b>ATM Put (PE)</b> paper trade aligned with market momentum, and continuously monitors live Stop-Loss and Target exits!
-          </div>
+      <!-- Compact Auto-Trading Control Bar -->
+      <div class="autotrade-card" style="padding: 12px 18px; margin-bottom: 14px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <span style="font-size: 14px; font-weight: 800; color: #fff;">🤖 Auto-Trade Bot:</span>
+          <span class="badge" id="autoStatusBadge" style="background: rgba(148,163,184,0.15); color: #94a3b8;">⚪ STANDBY (STOPPED)</span>
         </div>
 
-        <div class="autotrade-controls">
-          <div style="display: flex; flex-direction: column; gap: 4px;">
-            <label style="font-size: 11px; color: #93c5fd; font-weight: 700;">BOT BIAS:</label>
-            <select id="autoBiasSelect" class="form-select" style="padding: 6px 10px; width: 165px; font-size: 12px;">
-              <option value="AUTO" selected>🤖 Auto (Follow Momentum)</option>
+        <div class="autotrade-controls" style="gap: 10px; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <label style="font-size: 11px; color: #93c5fd; font-weight: 700;">BIAS:</label>
+            <select id="autoBiasSelect" class="form-select" style="padding: 5px 8px; width: 140px; font-size: 12px; min-height: 32px; height: 32px;">
+              <option value="AUTO" selected>🤖 Auto Momentum</option>
               <option value="CE">🟢 CALL (CE) Only</option>
               <option value="PE">🔴 PUT (PE) Only</option>
             </select>
           </div>
 
-          <div style="display: flex; flex-direction: column; gap: 4px;">
-            <label style="font-size: 11px; color: #93c5fd; font-weight: 700;">AUTO LOTS:</label>
-            <select id="autoLotSelect" class="form-select" style="padding: 6px 10px; width: 130px; font-size: 12px;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <label style="font-size: 11px; color: #93c5fd; font-weight: 700;">LOTS:</label>
+            <select id="autoLotSelect" class="form-select" style="padding: 5px 8px; width: 115px; font-size: 12px; min-height: 32px; height: 32px;">
               <option value="1">1 Lot (15 Qty)</option>
               <option value="2">2 Lots (30 Qty)</option>
               <option value="3">3 Lots (45 Qty)</option>
@@ -753,33 +752,28 @@
             </select>
           </div>
 
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <button id="btnStartAutoTrade" class="btn btn-success" style="font-size: 13px; padding: 9px 18px; min-height: 38px;" onclick="toggleAutoTrading(!paperState.autoTradingEnabled)">
-              ▶️ Start Auto-Trade
-            </button>
-            <button id="btnTakeTradeNow" class="btn btn-secondary" style="font-size: 12px; padding: 9px 12px; min-height: 38px; border-color: #3b82f6; color: #38bdf8;" onclick="executeAutoTrade('Manual Instant Trigger ⚡')" title="Take an automated trade right now">
-              ⚡ Take Trade Now
-            </button>
-          </div>
-
-          <div style="display: none;">
-            <input type="checkbox" id="autoTradeToggle" onchange="toggleAutoTrading(this.checked)">
-          </div>
+          <button id="btnStartAutoTrade" class="btn btn-success" style="font-size: 12px; padding: 6px 16px; min-height: 32px;" onclick="toggleAutoTrading(!paperState.autoTradingEnabled)">
+            ▶️ Start Auto-Trade
+          </button>
+          <button id="btnTakeTradeNow" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px; min-height: 32px; border-color: #3b82f6; color: #38bdf8;" onclick="executeAutoTrade('Manual Instant Trigger ⚡')" title="Take an automated trade right now">
+            ⚡ Take Trade Now
+          </button>
+          <input type="checkbox" id="autoTradeToggle" style="display: none;" onchange="toggleAutoTrading(this.checked)">
         </div>
       </div>
 
-      <!-- Trading Layout: Manual Ticket (Left) & Active Positions (Right) -->
-      <div class="trading-layout">
-        <!-- Manual Order Ticket -->
-        <div class="ticket-card">
-          <div class="ticket-header">
-            <span>⚡ Manual Option Buy Order</span>
+      <!-- Trading Layout: Quick Ticket (Left 310px) & Positions/History (Right 1fr) -->
+      <div class="trading-layout" style="grid-template-columns: 310px 1fr; gap: 14px; margin-bottom: 14px;">
+        <!-- Clean Quick Order Ticket -->
+        <div class="ticket-card" style="padding: 16px;">
+          <div class="ticket-header" style="padding-bottom: 8px;">
+            <span style="font-weight: 700; font-size: 14px;">⚡ Quick Manual Order</span>
             <span class="badge badge-buy">MARKET BUY</span>
           </div>
 
           <!-- Call / Put Selector -->
           <div class="form-group">
-            <span class="form-label">SELECT OPTION TYPE:</span>
+            <span class="form-label" style="font-size: 11px;">OPTION TYPE:</span>
             <div class="ticket-opt-type">
               <div class="opt-type-btn call active" id="btnCallType" onclick="setOptionType('CE')">🟢 CALL (CE)</div>
               <div class="opt-type-btn put" id="btnPutType" onclick="setOptionType('PE')">🔴 PUT (PE)</div>
@@ -788,11 +782,11 @@
 
           <!-- Spot & Strike -->
           <div class="form-group">
-            <div class="form-label">
-              <span>SELECT STRIKE:</span>
-              <span>Spot: <b class="num" id="ticketSpotRef">₹55,200</b></span>
+            <div class="form-label" style="font-size: 11px;">
+              <span>STRIKE:</span>
+              <span style="color: #94a3b8;">Spot: <b class="num" id="ticketSpotRef">₹55,200</b></span>
             </div>
-            <select id="ticketStrikeSelect" class="form-select" onchange="recalculateTicket()">
+            <select id="ticketStrikeSelect" class="form-select" onchange="recalculateTicket()" style="padding: 7px 10px; font-size: 12px;">
               <option value="55000">55,000 (Deep ITM)</option>
               <option value="55100">55,100 (ITM)</option>
               <option value="55200" selected>55,200 (ATM)</option>
@@ -803,104 +797,82 @@
 
           <!-- Quantity / Lots -->
           <div class="form-group">
-            <div class="form-label">
-              <span>QUANTITY (LOTS):</span>
-              <span id="ticketQtyLabel">15 Qty (1 Lot)</span>
+            <div class="form-label" style="font-size: 11px;">
+              <span>QUANTITY:</span>
+              <span id="ticketQtyLabel" style="color: #94a3b8;">15 Qty (1 Lot)</span>
             </div>
-            <select id="ticketLotSelect" class="form-select" onchange="recalculateTicket()">
+            <select id="ticketLotSelect" class="form-select" onchange="recalculateTicket()" style="padding: 7px 10px; font-size: 12px;">
               <option value="1">1 Lot (15 Qty)</option>
               <option value="2">2 Lots (30 Qty)</option>
               <option value="3">3 Lots (45 Qty)</option>
               <option value="5">5 Lots (75 Qty)</option>
-              <option value="10">10 Lots (150 Qty)</option>
             </select>
           </div>
 
-          <!-- Risk / Reward Multipliers -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div class="form-group">
-              <span class="form-label">STOP-LOSS (%):</span>
-              <select id="ticketSLPct" class="form-select" onchange="recalculateTicket()">
-                <option value="0.25">25% Loss</option>
-                <option value="0.35" selected>35% Loss (Std)</option>
-                <option value="0.50">50% Loss</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <span class="form-label">TARGET (%):</span>
-              <select id="ticketTPPct" class="form-select" onchange="recalculateTicket()">
-                <option value="0.50">50% Gain</option>
-                <option value="0.65" selected>65% Gain (Std)</option>
-                <option value="1.00">100% (2x Gain)</option>
-              </select>
+          <!-- Mini Order Summary -->
+          <div class="ticket-summary-box" style="padding: 10px; gap: 6px;">
+            <div class="summary-row" style="font-size: 12px;"><span>Est. Premium:</span> <b class="num" id="ticketEstPrem">₹385.00</b></div>
+            <div class="summary-row" style="font-size: 12px;"><span>Req. Margin:</span> <b class="num" id="ticketEstMargin" style="color: #fbbf24;">₹5,775.00</b></div>
+            <div style="display: none;">
+              <span id="ticketSLPrem"></span>
+              <span id="ticketTPPrem"></span>
+              <select id="ticketSLPct"><option value="0.35" selected></option></select>
+              <select id="ticketTPPct"><option value="0.65" selected></option></select>
             </div>
           </div>
 
-          <!-- Order Summary Box -->
-          <div class="ticket-summary-box">
-            <div class="summary-row"><span>Estimated Premium:</span> <b class="num" id="ticketEstPrem">₹385.00</b></div>
-            <div class="summary-row"><span>Required Capital:</span> <b class="num" id="ticketEstMargin" style="color: #fbbf24;">₹5,775.00</b></div>
-            <div class="summary-row"><span>SL Premium Level:</span> <b class="num down" id="ticketSLPrem">₹250.25</b></div>
-            <div class="summary-row"><span>Target Premium Level:</span> <b class="num up" id="ticketTPPrem">₹635.25</b></div>
-          </div>
-
-          <button class="btn" style="background: #2563eb; width: 100%; font-size: 14px; padding: 12px;" onclick="executeManualTrade()">
-            🚀 Execute Paper Buy Order
+          <button class="btn" style="background: #2563eb; width: 100%; font-size: 13px; padding: 10px; font-weight: 700;" onclick="executeManualTrade()">
+            🚀 Execute Paper Buy
           </button>
         </div>
 
-        <!-- Open Positions Panel -->
+        <!-- Right Side: Positions & History -->
         <div class="positions-panel">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <!-- Active Positions -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <h3 style="font-size: 16px; font-weight: 700; color: #fff;">📊 Active Open Positions</h3>
+              <h3 style="font-size: 15px; font-weight: 700; color: #fff;">📊 Active Positions</h3>
               <span class="badge badge-hold" id="openPosCountBadge">0 Open</span>
             </div>
-            <div style="display: flex; gap: 8px;">
-              <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px; min-height: 32px;" onclick="resetPaperAccount()">🔄 Reset Account</button>
-              <button class="btn btn-danger" style="font-size: 12px; padding: 6px 12px; min-height: 32px;" onclick="squareOffAll()">🔴 Square Off All</button>
-            </div>
+            <button class="btn btn-danger" style="font-size: 11px; padding: 4px 10px; min-height: 26px;" onclick="squareOffAll()">🔴 Square Off All</button>
           </div>
 
-          <div class="table-container">
+          <div class="table-container" style="margin-bottom: 14px;">
             <table>
               <thead>
                 <tr>
-                  <th>Symbol & Strike</th>
+                  <th>Instrument</th>
                   <th>Type</th>
                   <th>Qty</th>
-                  <th>Entry</th>
-                  <th>Live Price</th>
-                  <th>P&L (Pts)</th>
-                  <th>Unrealized P&L</th>
+                  <th>Entry ➔ LTP</th>
+                  <th>Net P&L (₹)</th>
                   <th>SL / Target</th>
-                  <th>Mode</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody id="openPositionsRows">
-                <tr><td colspan="10" style="text-align: center; padding: 30px; color: #94a3b8;">No open positions currently active. Execute a manual trade or toggle Auto-Trade!</td></tr>
+                <tr><td colspan="7" style="text-align: center; padding: 24px; color: #94a3b8; font-size: 13px;">✨ No open positions. Click <b>Start Auto-Trade</b> or place a manual buy order.</td></tr>
               </tbody>
             </table>
           </div>
 
           <!-- Trade Execution Log -->
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 8px;">
-            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
               <h4 style="font-size: 14px; font-weight: 700; color: #cbd5e1;">📜 Closed Trade History</h4>
               <div class="btn-group" style="display: inline-flex;">
-                <button id="btnFilterTodayTrades" class="btn btn-secondary active" style="font-size: 11px; padding: 4px 10px; min-height: 26px; border-color: #3b82f6; color: #38bdf8;" onclick="setTradeFilter('today')">⚡ Today's Trades Only</button>
-                <button id="btnFilterAllTrades" class="btn btn-secondary" style="font-size: 11px; padding: 4px 10px; min-height: 26px;" onclick="setTradeFilter('all')">All History</button>
+                <button id="btnFilterTodayTrades" class="btn btn-secondary active" style="font-size: 11px; padding: 3px 9px; min-height: 24px; border-color: #3b82f6; color: #38bdf8;" onclick="setTradeFilter('today')">⚡ Today's Trades Only</button>
+                <button id="btnFilterAllTrades" class="btn btn-secondary" style="font-size: 11px; padding: 3px 9px; min-height: 24px;" onclick="setTradeFilter('all')">All History</button>
               </div>
             </div>
-            <button class="btn btn-secondary" style="font-size: 11px; padding: 4px 8px; min-height: 28px;" onclick="clearClosedTrades()">Clear Log</button>
+            <button class="btn btn-secondary" style="font-size: 11px; padding: 3px 8px; min-height: 24px;" onclick="clearClosedTrades()">Clear Log</button>
           </div>
-          <div class="table-container" style="max-height: 220px;">
+          <div class="table-container" style="max-height: 200px;">
             <table>
               <thead>
                 <tr>
-                  <th>Date & Time</th>
-                  <th>Strike & Type</th>
+                  <th>Time / Date</th>
+                  <th>Symbol</th>
                   <th>Qty</th>
                   <th>Entry</th>
                   <th>Exit</th>
@@ -910,7 +882,7 @@
                 </tr>
               </thead>
               <tbody id="closedPositionsRows">
-                <tr><td colspan="8" style="text-align: center; padding: 20px; color: #64748b;">No closed trades recorded yet.</td></tr>
+                <tr><td colspan="8" style="text-align: center; padding: 18px; color: #64748b; font-size: 12px;">No closed trades recorded yet.</td></tr>
               </tbody>
             </table>
           </div>
@@ -923,11 +895,11 @@
     <!-- ============================================================================== -->
     <div id="tabStrategyView" style="display: none;">
       <!-- Hero Live Ribbon -->
-      <div class="bnf-hero-card">
-        <div class="bnf-hero-top">
+      <div class="bnf-hero-card" style="padding: 16px 20px; margin-bottom: 12px;">
+        <div class="bnf-hero-top" style="margin-bottom: 10px;">
           <div>
-            <span style="font-size: 22px; font-weight: 800; color: #fff;">🏦 BANK NIFTY (^NSEBANK)</span>
-            <span class="badge badge-hold" style="margin-left: 8px;">INDEX SPOT</span>
+            <span style="font-size: 20px; font-weight: 800; color: #fff;">🏦 BANK NIFTY SPOT</span>
+            <span class="badge badge-hold" style="margin-left: 8px;">^NSEBANK</span>
           </div>
           <div>
             <span class="bnf-price-huge num" id="bnfLivePrice">₹55,200.00</span>
@@ -936,88 +908,82 @@
         </div>
 
         <!-- Live Signal Banner -->
-        <div class="bnf-signal-banner bnf-signal-wait" id="bnfSignalBanner">
+        <div class="bnf-signal-banner bnf-signal-wait" id="bnfSignalBanner" style="padding: 12px 16px; margin-bottom: 10px;">
           <div style="display: flex; align-items: center; gap: 10px;">
             <span style="font-size: 20px;">⚡</span>
             <div>
-              <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.85;">Current Quant Setup State</div>
-              <div style="font-size: 16px; font-weight: 800;" id="bnfSignalText">WAITING FOR SQUEEZE COMPRESSION</div>
+              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.85;">Current Quant Setup State</div>
+              <div style="font-size: 15px; font-weight: 800;" id="bnfSignalText">WAITING FOR SQUEEZE COMPRESSION</div>
             </div>
           </div>
           <div style="font-size: 12px; font-weight: 600;" id="bnfSignalSubText">Requires Daily Range &lt; 0.85× ATR14 before breakout trigger</div>
         </div>
 
-        <div class="bnf-metrics-row">
-          <span>Today High: <b class="num" id="bnfTodayHigh">--</b></span>
-          <span>Today Low: <b class="num" id="bnfTodayLow">--</b></span>
-          <span>14-Day ATR: <b class="num" id="bnfTodayATR">-- pts</b></span>
+        <div class="bnf-metrics-row" style="font-size: 12px;">
+          <span>High: <b class="num" id="bnfTodayHigh">--</b></span>
+          <span>Low: <b class="num" id="bnfTodayLow">--</b></span>
+          <span>14D ATR: <b class="num" id="bnfTodayATR">-- pts</b></span>
           <span>Today Range: <b class="num" id="bnfTodayRange">-- pts</b></span>
-          <span>Compression Ratio: <b class="num" id="bnfCompressionRatio">--x ATR</b></span>
+          <span>Compression: <b class="num" id="bnfCompressionRatio">--x ATR</b></span>
         </div>
       </div>
 
-      <!-- Actionable Execution Blueprint (4 Boxes) -->
-      <div class="blueprint-grid">
-        <div class="blueprint-card" style="border-left: 3px solid #22c55e;">
-          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: #4ade80;">
-            <span>🟢 BUY TRIGGER (Bull Breakout)</span>
-            <span class="num" style="color: #94a3b8;">1:1 to 1.5:1 R:R</span>
-          </div>
-          <div class="num" style="font-size: 20px; font-weight: 800; color: #fff;" id="bnfLongTrigger">Above ₹--</div>
-          <div style="font-size: 12px; color: #94a3b8; line-height: 1.4;">
-            • <b>Stop-Loss (2.0x ATR):</b> <span class="num down" id="bnfLongSL">₹--</span><br>
-            • <b>Target 1 (2.0x ATR):</b> <span class="num up" id="bnfLongTP1">₹--</span><br>
-            • <b>Target 2 (3.0x ATR):</b> <span class="num up" id="bnfLongTP2">₹--</span>
+      <!-- Actionable Execution Blueprint (2 clean side-by-side cards) -->
+      <div class="blueprint-grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+        <div class="blueprint-card" style="border-left: 3px solid #22c55e; padding: 14px;">
+          <div style="font-size: 12px; font-weight: 700; color: #4ade80; margin-bottom: 4px;">🟢 BULLISH BREAKOUT TRIGGER (BUY)</div>
+          <div class="num" style="font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 6px;" id="bnfLongTrigger">Above ₹--</div>
+          <div style="font-size: 12px; color: #94a3b8; line-height: 1.5;">
+            Stop-Loss: <span class="num down" id="bnfLongSL">₹--</span> &bull; Target 1: <span class="num up" id="bnfLongTP1">₹--</span> &bull; Target 2: <span class="num up" id="bnfLongTP2">₹--</span>
           </div>
         </div>
 
-        <div class="blueprint-card" style="border-left: 3px solid #ef4444;">
-          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: #f87171;">
-            <span>🔴 SHORT TRIGGER (Bear Breakdown)</span>
-            <span class="num" style="color: #94a3b8;">1:1 to 1.5:1 R:R</span>
-          </div>
-          <div class="num" style="font-size: 20px; font-weight: 800; color: #fff;" id="bnfShortTrigger">Below ₹--</div>
-          <div style="font-size: 12px; color: #94a3b8; line-height: 1.4;">
-            • <b>Stop-Loss (2.0x ATR):</b> <span class="num down" id="bnfShortSL">₹--</span><br>
-            • <b>Target 1 (2.0x ATR):</b> <span class="num up" id="bnfShortTP1">₹--</span><br>
-            • <b>Target 2 (3.0x ATR):</b> <span class="num up" id="bnfShortTP2">₹--</span>
+        <div class="blueprint-card" style="border-left: 3px solid #ef4444; padding: 14px;">
+          <div style="font-size: 12px; font-weight: 700; color: #f87171; margin-bottom: 4px;">🔴 BEARISH BREAKDOWN TRIGGER (SELL)</div>
+          <div class="num" style="font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 6px;" id="bnfShortTrigger">Below ₹--</div>
+          <div style="font-size: 12px; color: #94a3b8; line-height: 1.5;">
+            Stop-Loss: <span class="num down" id="bnfShortSL">₹--</span> &bull; Target 1: <span class="num up" id="bnfShortTP1">₹--</span> &bull; Target 2: <span class="num up" id="bnfShortTP2">₹--</span>
           </div>
         </div>
 
-        <div class="blueprint-card" style="border-left: 3px solid #fbbf24;">
-          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: #fbbf24;">
-            <span>🎯 OPTIONS STRIKE SELECTION</span>
-            <span style="color: #94a3b8;">Current Expiry</span>
-          </div>
-          <div class="num" style="font-size: 20px; font-weight: 800; color: #fff;" id="bnfATMStrikes">-- ATM</div>
-          <div style="font-size: 12px; color: #94a3b8; line-height: 1.4;">
-            • <b>Bullish Breakout:</b> Buy <span class="num up" id="bnfAtmCE">-- CE</span> (Delta ~0.50)<br>
-            • <b>Bearish Breakdown:</b> Buy <span class="num down" id="bnfAtmPE">-- PE</span> (Delta ~0.50)<br>
-            • <i>Option SL = Triggered on Spot 2.0x ATR cross</i>
-          </div>
+        <div style="display: none;">
+          <span id="bnfATMStrikes"></span>
+          <span id="bnfAtmCE"></span>
+          <span id="bnfAtmPE"></span>
         </div>
+      </div>
 
-        <div class="blueprint-card" style="border-left: 3px solid #38bdf8;">
-          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: #38bdf8;">
-            <span>📋 EXECUTION DISCIPLINE</span>
-            <span style="color: #94a3b8;">Rulebook</span>
-          </div>
-          <div style="font-size: 16px; font-weight: 700; color: #e2e8f0;">Zero-Emotion Trading</div>
-          <div style="font-size: 12px; color: #94a3b8; line-height: 1.4;">
-            • Only enters after verified low-range compression day.<br>
-            • Trades only ~17 times/year, avoiding choppy sideways days.<br>
-            • 2.0x ATR buffer prevents premature stop-outs from noise.
-          </div>
+      <!-- 4 Key Strategy Performance Highlights -->
+      <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px;">
+        <div class="kpi-card" style="border-top: 3px solid #38bdf8; padding: 12px;">
+          <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Win Rate</span>
+          <span class="num" style="font-size: 20px; font-weight: 800; color: #38bdf8;">63.5%</span>
+          <span style="font-size: 11px; color: var(--text-muted);">108 Wins / 62 Losses</span>
+        </div>
+        <div class="kpi-card" style="border-top: 3px solid #22c55e; padding: 12px;">
+          <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Profit Factor</span>
+          <span class="num up" style="font-size: 20px; font-weight: 800;">1.73</span>
+          <span style="font-size: 11px; color: var(--text-muted);">Gross 1.73x Losses</span>
+        </div>
+        <div class="kpi-card" style="border-top: 3px solid #c084fc; padding: 12px;">
+          <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">10-Yr Net Pts</span>
+          <span class="num" style="font-size: 20px; font-weight: 800; color: #c084fc;">+54,335 pts</span>
+          <span style="font-size: 11px; color: var(--text-muted);">+320 pts / trade</span>
+        </div>
+        <div class="kpi-card" style="border-top: 3px solid #fbbf24; padding: 12px;">
+          <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Est. 1-Lot Return</span>
+          <span class="num" style="font-size: 20px; font-weight: 800; color: #fbbf24;">₹8,15,025</span>
+          <span style="font-size: 11px; color: var(--text-muted);">Max DD: ₹91,455</span>
         </div>
       </div>
 
       <!-- Live TradingView Chart Widget -->
-      <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; margin-bottom: 14px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <h3 style="font-size: 15px; font-weight: 700; color: #fff;">📈 Live Interactive TradingView Chart (BANKNIFTY)</h3>
-          <span style="font-size: 12px; color: #94a3b8;">Daily Candles &bull; Interactive Candlesticks</span>
+      <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <h3 style="font-size: 14px; font-weight: 700; color: #fff;">📈 Live Bank Nifty Candlestick Chart</h3>
+          <span style="font-size: 11px; color: #94a3b8;">Daily Frame &bull; Interactive</span>
         </div>
-        <div style="height: 480px; width: 100%; border-radius: 8px; overflow: hidden; border: 1px solid #1e293b;">
+        <div style="height: 420px; width: 100%; border-radius: 8px; overflow: hidden; border: 1px solid #1e293b;">
           <iframe 
             src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_bnf&symbol=NSE%3ABANKNIFTY&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=%5B%5D&theme=dark&style=1&timezone=Asia%2FKolkata&withdateranges=1&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=en&utm_source=localhost"
             style="width: 100%; height: 100%; border: none;"
@@ -1026,63 +992,20 @@
         </div>
       </div>
 
-      <!-- 10-Year Verified Backtest Performance Scorecard -->
-      <div style="margin-bottom: 14px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <h3 style="font-size: 15px; font-weight: 700; color: #fff;">📊 10-Year Backtest Verification (2016 – 2026 Official Candles)</h3>
-          <span style="font-size: 12px; color: #94a3b8;">2,467 Sessions • 962 Parameter Combinations Evaluated</span>
-        </div>
-        <div class="kpi-grid">
-          <div class="kpi-card" style="border-top: 3px solid #22c55e;">
-            <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Profit Factor</span>
-            <span class="num up" style="font-size: 20px; font-weight: 800;">1.73</span>
-            <span style="font-size: 11px; color: var(--text-muted);">Highest among all 962 models</span>
-          </div>
-          <div class="kpi-card" style="border-top: 3px solid #38bdf8;">
-            <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Empirical Win Rate</span>
-            <span class="num" style="font-size: 20px; font-weight: 800; color: #38bdf8;">63.5%</span>
-            <span style="font-size: 11px; color: var(--text-muted);">108 Wins / 62 Losses (170 Trades)</span>
-          </div>
-          <div class="kpi-card" style="border-top: 3px solid #a855f7;">
-            <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">10-Year Total Net Points</span>
-            <span class="num" style="font-size: 20px; font-weight: 800; color: #c084fc;">+54,335 pts</span>
-            <span style="font-size: 11px; color: var(--text-muted);">Gross +128.6k / Loss -74.3k</span>
-          </div>
-          <div class="kpi-card" style="border-top: 3px solid #fbbf24;">
-            <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Net Profit (1 Lot Futures)</span>
-            <span class="num" style="font-size: 20px; font-weight: 800; color: #fbbf24;">₹8,15,025</span>
-            <span style="font-size: 11px; color: var(--text-muted);">2 Lots: ₹16,30,050</span>
-          </div>
-          <div class="kpi-card" style="border-top: 3px solid #f87171;">
-            <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Max Drawdown</span>
-            <span class="num down" style="font-size: 20px; font-weight: 800;">-6,097 pts</span>
-            <span style="font-size: 11px; color: var(--text-muted);">Only -₹91,455 per 1 lot</span>
-          </div>
-          <div class="kpi-card" style="border-top: 3px solid #34d399;">
-            <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Expectancy / Trade</span>
-            <span class="num up" style="font-size: 20px; font-weight: 800;">+320 pts</span>
-            <span style="font-size: 11px; color: var(--text-muted);">Expected gain on every trade</span>
-          </div>
-        </div>
-      </div>
-
       <!-- Bank Nifty Strategy Signal & Trade Log -->
       <div style="margin-bottom: 14px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
-          <h3 style="font-size: 15px; font-weight: 700; color: #fff;">📅 Bank Nifty Signal & Trade Verification</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+          <h3 style="font-size: 14px; font-weight: 700; color: #fff;">📅 Signal Verification Log</h3>
           <div class="btn-group" style="display: inline-flex;">
-            <button id="btnSessionToday" class="btn btn-secondary active" style="font-size: 11px; padding: 4px 11px; min-height: 28px; border-color: #3b82f6; color: #38bdf8;" onclick="setSessionFilter('today')">⚡ Today's Trade Only</button>
-            <button id="btnSessionAll" class="btn btn-secondary" style="font-size: 11px; padding: 4px 11px; min-height: 28px;" onclick="setSessionFilter('all')">Last 15 Sessions</button>
+            <button id="btnSessionToday" class="btn btn-secondary active" style="font-size: 11px; padding: 3px 10px; min-height: 26px; border-color: #3b82f6; color: #38bdf8;" onclick="setSessionFilter('today')">⚡ Today's Trade Only</button>
+            <button id="btnSessionAll" class="btn btn-secondary" style="font-size: 11px; padding: 3px 10px; min-height: 26px;" onclick="setSessionFilter('all')">Last 15 Sessions</button>
           </div>
         </div>
-        <div class="table-container" style="max-height: 280px;">
+        <div class="table-container" style="max-height: 240px;">
           <table>
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Open (₹)</th>
-                <th>High (₹)</th>
-                <th>Low (₹)</th>
                 <th>Close (₹)</th>
                 <th>Range (pts)</th>
                 <th>ATR14</th>
@@ -1092,7 +1015,7 @@
               </tr>
             </thead>
             <tbody id="bnfSessionRows">
-              <tr><td colspan="10" style="text-align: center; padding: 20px; color: #94a3b8;">Loading historical verification sessions...</td></tr>
+              <tr><td colspan="7" style="text-align: center; padding: 18px; color: #94a3b8; font-size: 12px;">Loading historical verification sessions...</td></tr>
             </tbody>
           </table>
         </div>
@@ -1561,6 +1484,14 @@
         totalUnrealized += (p.currentPrice - p.entryPrice) * p.qty;
       });
 
+      const totalPL = Math.round((totalUnrealized + paperState.realizedPL) * 10) / 10;
+      const totalPLEl = document.getElementById('portTotalPL');
+      if (totalPLEl) {
+        const sign = totalPL >= 0 ? '+' : '';
+        totalPLEl.innerText = `${sign}₹${Math.round(totalPL).toLocaleString('en-IN')}`;
+        totalPLEl.className = 'portfolio-val num ' + (totalPL > 0 ? 'up' : (totalPL < 0 ? 'down' : ''));
+      }
+
       document.getElementById('portBalance').innerText = '₹' + Math.round(paperState.balance + paperState.invested + totalUnrealized).toLocaleString('en-IN');
       document.getElementById('portAvailable').innerText = '₹' + Math.round(paperState.balance).toLocaleString('en-IN');
       document.getElementById('portInvested').innerText = '₹' + Math.round(paperState.invested).toLocaleString('en-IN');
@@ -1588,7 +1519,7 @@
       document.getElementById('openPosCountBadge').innerText = `${paperState.positions.length} Open`;
 
       if (paperState.positions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 30px; color: #94a3b8;">No open positions currently active. Execute a manual trade or toggle Auto-Trade!</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 24px; color: #94a3b8; font-size: 13px;">✨ No open positions. Click <b>Start Auto-Trade</b> or place a manual buy order.</td></tr>';
         return;
       }
 
@@ -1599,20 +1530,17 @@
         const plClass = pl >= 0 ? 'up' : 'down';
         const plSign = pl >= 0 ? '+' : '';
         const badgeClass = pos.type === 'CE' ? 'badge-buy' : 'badge-short';
-        const modeBadge = pos.mode === 'AUTO' ? '<span class="badge" style="background:#1e3a8a;color:#93c5fd;">🤖 AUTO</span>' : '<span class="badge" style="background:#334155;color:#e2e8f0;">👤 MANUAL</span>';
+        const modeBadge = pos.mode === 'AUTO' ? '<span class="badge" style="background:#1e3a8a;color:#93c5fd;font-size:10px;margin-left:4px;">🤖 AUTO</span>' : '<span class="badge" style="background:#334155;color:#e2e8f0;font-size:10px;margin-left:4px;">👤 MANUAL</span>';
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td><b>${pos.symbol}</b></td>
+          <td><b>${pos.symbol}</b>${modeBadge}</td>
           <td><span class="badge ${badgeClass}">${pos.type === 'CE' ? 'CALL (CE)' : 'PUT (PE)'}</span></td>
-          <td class="num">${pos.qty}</td>
-          <td class="num">₹${pos.entryPrice.toFixed(2)}</td>
-          <td class="num"><b>₹${pos.currentPrice.toFixed(2)}</b></td>
-          <td class="num ${plClass}">${plSign}${pts.toFixed(2)}</td>
-          <td class="num ${plClass}" style="font-weight: 800;">${plSign}₹${pl.toLocaleString('en-IN')}</td>
-          <td class="num" style="font-size: 11px; color: #94a3b8;">SL: ₹${pos.slPrice.toFixed(2)}<br>TP: ₹${pos.tpPrice.toFixed(2)}</td>
-          <td>${modeBadge}</td>
-          <td><button class="btn btn-danger" style="font-size: 11px; padding: 4px 10px; min-height: 28px;" onclick="squareOffPosition('${pos.id}')">Square Off</button></td>
+          <td class="num">${pos.qty} <span style="font-size:11px;color:#64748b;">(${pos.lots}L)</span></td>
+          <td class="num">₹${pos.entryPrice.toFixed(2)} ➔ <b>₹${pos.currentPrice.toFixed(2)}</b></td>
+          <td class="num ${plClass}" style="font-weight: 800; font-size: 13px;">${plSign}₹${pl.toLocaleString('en-IN')} <span style="font-size:11px;font-weight:500;">(${plSign}${pts.toFixed(1)} pts)</span></td>
+          <td class="num" style="font-size: 11px; color: #94a3b8;">SL ₹${pos.slPrice.toFixed(1)} / TP ₹${pos.tpPrice.toFixed(1)}</td>
+          <td><button class="btn btn-danger" style="font-size: 11px; padding: 4px 10px; min-height: 26px;" onclick="squareOffPosition('${pos.id}')">Square Off</button></td>
         `;
         tbody.appendChild(tr);
       });
@@ -1752,9 +1680,6 @@
 
         tr.innerHTML = `
           <td><b>${s.date}</b>${todayBadge}</td>
-          <td class="num">₹${s.open.toLocaleString('en-IN')}</td>
-          <td class="num">₹${s.high.toLocaleString('en-IN')}</td>
-          <td class="num">₹${s.low.toLocaleString('en-IN')}</td>
           <td class="num"><b>₹${s.close.toLocaleString('en-IN')}</b></td>
           <td class="num">${s.range.toLocaleString('en-IN')} pts</td>
           <td class="num">${s.atr.toLocaleString('en-IN')} pts</td>
