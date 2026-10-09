@@ -1,4 +1,5 @@
-# Enter your NSE stock symbols below (one per line, without .NS)
+# StockWatch Watchlist
+BANKNIFTY
 PETRONET
 RELIANCE
 TCS
@@ -14,3 +15,4 @@ BHARTIARTL
 WIPRO
 TITAN
 BEL
+GAIL

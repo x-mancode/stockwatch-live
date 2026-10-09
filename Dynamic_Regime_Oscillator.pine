@@ -1,0 +1,162 @@
+//@version=5
+indicator("Dynamic Regime Oscillator (DRO) [StockWatch]", shorttitle="DRO Futures", overlay=true)
+
+// ==========================================
+// 1. INPUT SETTINGS & PARAMETERS
+// ==========================================
+groupRegime   = "Regime Detection (Kaufman Efficiency Ratio)"
+erPeriod      = input.int(14, "ER Lookback Period", minval=5, maxval=50, group=groupRegime)
+erThreshold   = input.float(0.38, "Trend vs Range Threshold (ER)", minval=0.20, maxval=0.60, step=0.01, group=groupRegime)
+
+groupParams   = "Core Indicator Parameters"
+atrPeriod     = input.int(14, "ATR Volatility Period", minval=5, group=groupParams)
+atrMultiplier = input.float(1.5, "ATR Stop-Loss Multiplier", minval=0.5, step=0.1, group=groupParams)
+target2Mult   = input.float(3.0, "ATR Target 2 Multiplier (1:2 R/R)", minval=1.0, step=0.5, group=groupParams)
+emaFastLen    = input.int(20, "Fast EMA Period", group=groupParams)
+emaMacroLen   = input.int(200, "Macro Trend EMA Period", group=groupParams)
+
+groupVisual   = "Visuals & Alerts"
+showBarColors = input.bool(true, "Color Chart Bars by Signal", group=groupVisual)
+showSignals   = input.bool(true, "Show Buy / Short Signals on Chart", group=groupVisual)
+showLines     = input.bool(true, "Show Active Stop-Loss & Target Lines", group=groupVisual)
+showTable     = input.bool(true, "Show Real-Time HUD Dashboard Table", group=groupVisual)
+
+// ==========================================
+// 2. MATHEMATICAL CALCULATIONS
+// ==========================================
+
+// 2.1 Kaufman Efficiency Ratio (ER)
+netChange = math.abs(close - close[erPeriod])
+sumChanges = math.sum(math.abs(close - close[1]), erPeriod)
+er = sumChanges == 0 ? 0.0 : netChange / sumChanges
+isTrending = er >= erThreshold
+
+// 2.2 Moving Averages & Volatility
+ema20 = ta.ema(close, emaFastLen)
+ema200 = ta.ema(close, emaMacroLen)
+atrVal = ta.atr(atrPeriod)
+zATR = atrVal == 0 ? 0.0 : (close - ema20) / atrVal
+
+// 2.3 Smart Money Flow (Volume-Weighted Close Location Value)
+hlRange = high - low
+clv = hlRange == 0 ? 0.0 : ((close - low) - (high - close)) / hlRange
+smf = ta.ema(clv * volume, 14) / ta.ema(volume, 14) // [-1.0, +1.0]
+
+// 2.4 Relative Strength Index (RSI 14)
+rsiVal = ta.rsi(close, 14)
+
+// ==========================================
+// 3. ADAPTIVE REGIME-SWITCHING SCORING
+// ==========================================
+var float droScore = 0.0
+
+if isTrending
+    // MODE A: TRENDING REGIME (Ride Momentum & Pullbacks)
+    trendDir = close > ema200 ? 1.0 : -1.0
+    trendScore = trendDir * (close > ema20 ? 40.0 : 20.0)
+    momScore = math.max(-35.0, math.min(35.0, (rsiVal - 50.0) * 1.5 + smf * 20.0))
+    pullback = (trendDir == 1.0 and zATR > -1.5 and zATR < 0.5) ? 25.0 : (trendDir == -1.0 and zATR > -0.5 and zATR < 1.5) ? -25.0 : 0.0
+    droScore := trendScore + momScore + pullback
+else
+    // MODE B: RANGE-BOUND REGIME (Contrarian Mean Reversion)
+    meanRev = -math.max(-45.0, math.min(45.0, zATR * 25.0))
+    smScore = smf * 35.0
+    rsiExt = rsiVal < 35.0 ? 20.0 : rsiVal > 65.0 ? -20.0 : 0.0
+    droScore := meanRev + smScore + rsiExt
+
+droScore := math.round(math.max(-100.0, math.min(100.0, droScore)))
+
+// ==========================================
+// 4. SIGNAL DEFINITIONS & LEVELS
+// ==========================================
+isStrongLong  = droScore >= 45
+isLong        = droScore >= 20 and droScore < 45
+isStrongShort = droScore <= -45
+isShort       = droScore <= -20 and droScore > -45
+isNeutral     = droScore > -20 and droScore < 20
+
+// Entry Trigger Events (Signal Transitions)
+longTrigger  = (isStrongLong or isLong) and not (isStrongLong[1] or isLong[1])
+shortTrigger = (isStrongShort or isShort) and not (isStrongShort[1] or isShort[1])
+
+// Dynamic Stop Loss and Targets (Inverted for Short Selling)
+var float stopLossLevel = na
+var float target1Level  = na
+var float target2Level  = na
+
+if isStrongLong or isLong
+    stopLossLevel := math.round_to_mintick(close - atrMultiplier * atrVal)
+    target1Level  := math.round_to_mintick(close + atrMultiplier * atrVal)
+    target2Level  := math.round_to_mintick(close + target2Mult * atrVal)
+else if isStrongShort or isShort
+    // Inverted for Short Futures
+    stopLossLevel := math.round_to_mintick(close + atrMultiplier * atrVal)
+    target1Level  := math.round_to_mintick(close - atrMultiplier * atrVal)
+    target2Level  := math.round_to_mintick(close - target2Mult * atrVal)
+
+// ==========================================
+// 5. CHART VISUALS & PLOTS
+// ==========================================
+
+// Bar Coloring
+barCol = isStrongLong ? color.rgb(34, 197, 94) : isLong ? color.rgb(134, 239, 172) : isStrongShort ? color.rgb(239, 68, 68) : isShort ? color.rgb(252, 165, 165) : color.rgb(148, 163, 184)
+barcolor(showBarColors ? barCol : na)
+
+// Plot Signals on Chart
+plotshape(showSignals and longTrigger, title="Buy Future Signal", style=shape.labelup, location=location.belowbar, color=color.green, text="BUY FUTURE", textcolor=color.white, size=size.small)
+plotshape(showSignals and shortTrigger, title="Short Future Signal", style=shape.labeldown, location=location.abovebar, color=color.red, text="SHORT FUTURE", textcolor=color.white, size=size.small)
+
+// Plot Active Levels
+plot(showLines and (isStrongLong or isLong or isStrongShort or isShort) ? stopLossLevel : na, "Stop-Loss", color=color.red, style=plot.style_linebr, linewidth=2)
+plot(showLines and (isStrongLong or isLong or isStrongShort or isShort) ? target1Level : na, "Target 1 (1:1)", color=color.rgb(134, 239, 172), style=plot.style_linebr, linewidth=1)
+plot(showLines and (isStrongLong or isLong or isStrongShort or isShort) ? target2Level : na, "Target 2 (1:2)", color=color.green, style=plot.style_linebr, linewidth=2)
+
+// 200 EMA Macro Trend Cloud Line
+plot(ema200, "200 EMA Trend Filter", color=color.rgb(234, 179, 8, 50), linewidth=2)
+
+// ==========================================
+// 6. REAL-TIME HUD DASHBOARD TABLE
+// ==========================================
+var table hud = table.new(position.top_right, 2, 8, bgcolor=color.rgb(15, 23, 42, 20), border_color=color.rgb(51, 65, 85), border_width=1)
+
+if barstate.islast and showTable
+    // Header
+    table.cell(hud, 0, 0, "DRO Futures HUD", bgcolor=color.rgb(30, 41, 59), text_color=color.white, text_size=size.small)
+    table.cell(hud, 1, 0, isTrending ? "TREND MODE" : "RANGE MODE", bgcolor=isTrending ? color.rgb(14, 116, 144) : color.rgb(71, 85, 105), text_color=color.white, text_size=size.small)
+    
+    // Status Action
+    statusText = isStrongLong ? "BUY FUTURE (Strong)" : isLong ? "BUY FUTURE (Pullback)" : isStrongShort ? "SHORT FUTURE (Strong)" : isShort ? "SHORT FUTURE (Resistance)" : "STAND ASIDE (Wait)"
+    statusColor = (isStrongLong or isLong) ? color.green : (isStrongShort or isShort) ? color.red : color.gray
+    table.cell(hud, 0, 1, "Action:", text_color=color.silver, text_size=size.small)
+    table.cell(hud, 1, 1, statusText, bgcolor=statusColor, text_color=color.white, text_size=size.small)
+
+    // Score
+    table.cell(hud, 0, 2, "DRO Score:", text_color=color.silver, text_size=size.small)
+    table.cell(hud, 1, 2, (droScore > 0 ? "+" : "") + str.tostring(droScore), text_color=color.white, text_size=size.small)
+
+    // Stop Loss
+    slDiff = math.abs(close - stopLossLevel)
+    slPct = (slDiff / close) * 100.0
+    table.cell(hud, 0, 3, "Stop-Loss (₹):", text_color=color.silver, text_size=size.small)
+    table.cell(hud, 1, 3, "₹" + str.tostring(stopLossLevel) + " (" + str.tostring(slPct, "#.#") + "%)", text_color=color.rgb(252, 165, 165), text_size=size.small)
+
+    // Target 1 & 2
+    table.cell(hud, 0, 4, "Target 1 (1:1):", text_color=color.silver, text_size=size.small)
+    table.cell(hud, 1, 4, "₹" + str.tostring(target1Level), text_color=color.rgb(187, 247, 208), text_size=size.small)
+
+    table.cell(hud, 0, 5, "Target 2 (1:2):", text_color=color.silver, text_size=size.small)
+    table.cell(hud, 1, 5, "₹" + str.tostring(target2Level), text_color=color.rgb(74, 222, 128), text_size=size.small)
+
+    // Efficiency Ratio (ER)
+    table.cell(hud, 0, 6, "Efficiency (ER):", text_color=color.silver, text_size=size.small)
+    table.cell(hud, 1, 6, str.tostring(er, "#.##"), text_color=color.white, text_size=size.small)
+
+    // Daily ATR
+    table.cell(hud, 0, 7, "Daily ATR:", text_color=color.silver, text_size=size.small)
+    table.cell(hud, 1, 7, "₹" + str.tostring(atrVal, "#.##"), text_color=color.white, text_size=size.small)
+
+// ==========================================
+// 7. TRADINGVIEW ALERTS
+// ==========================================
+alertcondition(longTrigger, title="[DRO] Buy Future Alert", message="DRO Triggered BUY FUTURE on {{ticker}} at close {{close}}. Stop-Loss: {{plot_0}}")
+alertcondition(shortTrigger, title="[DRO] Short Future Alert", message="DRO Triggered SHORT FUTURE on {{ticker}} at close {{close}}. Stop-Loss: {{plot_0}}")

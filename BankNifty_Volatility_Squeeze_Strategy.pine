@@ -1,0 +1,112 @@
+//@version=5
+strategy("Bank Nifty Volatility Compression Squeeze (VCS)", shorttitle="BNF VCS Strategy", overlay=true, initial_capital=500000, default_qty_type=strategy.fixed, default_qty_value=15, currency=currency.INR)
+
+// ==============================================================================
+// 1. STRATEGY INPUTS & USER PARAMETERS
+// ==============================================================================
+groupParams     = "Quantitative Parameters (10-Yr Optimized)"
+atrLen          = input.int(14, "ATR Volatility Lookback", minval=5, group=groupParams)
+slMultiplier    = input.float(2.0, "Stop-Loss ATR Multiplier", minval=0.5, step=0.25, group=groupParams)
+tpMultiplier    = input.float(2.5, "Profit Target ATR Multiplier", minval=1.0, step=0.5, group=groupParams)
+compressionRatio = input.float(0.85, "Range Compression Threshold (vs ATR)", minval=0.5, maxval=1.2, step=0.05, group=groupParams)
+
+groupFilters    = "Trend & Regime Filters"
+useEMATrend     = input.bool(false, "Require 200 EMA Macro Trend Filter", group=groupFilters)
+useTrailing     = input.bool(false, "Enable Trailing Stop Loss", group=groupFilters)
+
+groupVisuals    = "Display & HUD"
+showLevels      = input.bool(true, "Show Stop-Loss & Target Bands", group=groupVisuals)
+showTable       = input.bool(true, "Show HUD Metrics Dashboard", group=groupVisuals)
+
+// ==============================================================================
+// 2. QUANTITATIVE INDICATORS
+// ==============================================================================
+atrVal   = ta.atr(atrLen)
+ema200   = ta.ema(close, 200)
+
+// Daily Range calculation
+currentRange = high - low
+prevRange1   = high[1] - low[1]
+prevRange2   = high[2] - low[2]
+
+// Volatility Compression Detection (Coiled Spring Pattern)
+// Condition: Previous day's range was smaller than day before AND tighter than 85% of ATR
+isCompressed = (prevRange1 < prevRange2) and (prevRange1 < (atrVal[1] * compressionRatio))
+
+// Breakout Triggers
+longTrigger  = isCompressed and (close > high[1]) and (not useEMATrend or close > ema200)
+shortTrigger = isCompressed and (close < low[1])  and (not useEMATrend or close < ema200)
+
+// ==============================================================================
+// 3. EXECUTION LOGIC & POSITION MANAGEMENT
+// ==============================================================================
+var float entryPrice = na
+var float slLevel    = na
+var float tpLevel    = na
+
+// LONG ENTRY
+if (longTrigger and strategy.position_size == 0)
+    entryPrice := close
+    slLevel    := close - (slMultiplier * atrVal)
+    tpLevel    := close + (tpMultiplier * atrVal)
+    strategy.entry("VCS Long", strategy.long, comment="BUY BNF")
+
+// SHORT ENTRY (Futures / Put Equivalent)
+if (shortTrigger and strategy.position_size == 0)
+    entryPrice := close
+    slLevel    := close + (slMultiplier * atrVal)
+    tpLevel    := close - (tpMultiplier * atrVal)
+    strategy.entry("VCS Short", strategy.short, comment="SHORT BNF")
+
+// POSITION EXITS
+if (strategy.position_size > 0)
+    if (useTrailing)
+        slLevel := math.max(slLevel, close - (slMultiplier * atrVal))
+    strategy.exit("Exit Long", from_entry="VCS Long", stop=slLevel, limit=tpLevel)
+
+if (strategy.position_size < 0)
+    if (useTrailing)
+        slLevel := math.min(slLevel, close + (slMultiplier * atrVal))
+    strategy.exit("Exit Short", from_entry="VCS Short", stop=slLevel, limit=tpLevel)
+
+// Reset levels when flat
+if (strategy.position_size == 0)
+    entryPrice := na
+    slLevel    := na
+    tpLevel    := na
+
+// ==============================================================================
+// 4. CHART VISUALIZATION & LEVELS
+// ==============================================================================
+plot(showLevels and strategy.position_size != 0 ? slLevel : na, "Stop Loss", color=color.new(color.red, 20), style=plot.style_linebr, linewidth=2)
+plot(showLevels and strategy.position_size != 0 ? tpLevel : na, "Profit Target", color=color.new(color.green, 20), style=plot.style_linebr, linewidth=2)
+plot(useEMATrend ? ema200 : na, "200 EMA Macro", color=color.new(color.yellow, 40), linewidth=2)
+
+// Compression Bar Highlight
+barcolor(isCompressed ? color.new(color.orange, 0) : na, title="Compression Day Highlight")
+
+// ==============================================================================
+// 5. REAL-TIME HUD DASHBOARD TABLE
+// ==============================================================================
+var table hud = table.new(position.top_right, 2, 6, bgcolor=color.new(#131b2e, 10), border_color=color.new(#334155, 30), border_width=1)
+
+if (barstate.islast and showTable)
+    table.cell(hud, 0, 0, "BANK NIFTY VCS HUD", bgcolor=color.new(#1e293b, 0), text_color=color.white, text_size=size.small)
+    table.cell(hud, 1, 0, "STATUS", bgcolor=color.new(#1e293b, 0), text_color=color.white, text_size=size.small)
+    
+    table.cell(hud, 0, 1, "Current ATR (14)", text_color=color.gray, text_size=size.small)
+    table.cell(hud, 1, 1, str.tostring(math.round(atrVal)) + " pts", text_color=color.white, text_size=size.small)
+    
+    table.cell(hud, 0, 2, "Volatility State", text_color=color.gray, text_size=size.small)
+    table.cell(hud, 1, 2, isCompressed ? "COILED (Squeeze)" : "NORMAL", text_color=isCompressed ? color.orange : color.gray, text_size=size.small)
+
+    table.cell(hud, 0, 3, "Position", text_color=color.gray, text_size=size.small)
+    string posText = strategy.position_size > 0 ? "LONG (Bull)" : (strategy.position_size < 0 ? "SHORT (Bear)" : "NO TRADE")
+    color posColor = strategy.position_size > 0 ? color.green : (strategy.position_size < 0 ? color.red : color.gray)
+    table.cell(hud, 1, 3, posText, text_color=posColor, text_size=size.small)
+
+    table.cell(hud, 0, 4, "Current Stop-Loss", text_color=color.gray, text_size=size.small)
+    table.cell(hud, 1, 4, strategy.position_size != 0 ? str.tostring(math.round(slLevel)) : "-", text_color=color.red, text_size=size.small)
+
+    table.cell(hud, 0, 5, "Profit Target", text_color=color.gray, text_size=size.small)
+    table.cell(hud, 1, 5, strategy.position_size != 0 ? str.tostring(math.round(tpLevel)) : "-", text_color=color.green, text_size=size.small)

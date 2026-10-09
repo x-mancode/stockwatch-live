@@ -84,11 +84,23 @@ function calculateSMF(highs, lows, closes, volumes, period = 14) {
 }
 
 async function fetchLiveStock(rawSymbol) {
-  const symbol = rawSymbol.toUpperCase().endsWith('.NS') ? rawSymbol.toUpperCase() : `${rawSymbol.toUpperCase()}.NS`;
-  const cleanSymbol = symbol.replace('.NS', '');
+  const upper = rawSymbol.trim().toUpperCase();
+  let querySymbol = upper;
+  let cleanSymbol = upper.replace('.NS', '');
+
+  if (upper === 'BANKNIFTY' || upper === '^NSEBANK') {
+    querySymbol = '%5ENSEBANK';
+    cleanSymbol = 'BANKNIFTY';
+  } else if (upper === 'NIFTY' || upper === '^NSEI') {
+    querySymbol = '%5ENSEI';
+    cleanSymbol = 'NIFTY';
+  } else {
+    querySymbol = upper.endsWith('.NS') ? upper : `${upper}.NS`;
+    cleanSymbol = upper.replace('.NS', '');
+  }
 
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1y&interval=1d`;
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${querySymbol}?range=1y&interval=1d`;
     const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
     const data = await res.json();
     if (!data.chart || !data.chart.result || data.chart.result.length === 0) return null;
