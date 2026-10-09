@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚡ Quantitative Strategy Backtester | Bank Nifty Pivot R1/R2 System</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #080d1a;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #1e293b;
+      --border-accent: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --green: #22c55e;
+      --green-glow: rgba(34, 197, 94, 0.2);
+      --red: #ef4444;
+      --red-glow: rgba(239, 68, 68, 0.2);
+      --blue: #3b82f6;
+      --cyan: #06b6d4;
+      --amber: #f59e0b;
+      --purple: #a855f7;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .num {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 16px 20px 40px 20px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Top Bar & Navigation */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .nav-tab-link {
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: #0f172a;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-tab-link:hover {
+      background: #1e293b;
+      color: #fff;
+      border-color: #334155;
+    }
+
+    .nav-tab-link.active {
+      background: #1e3a8a;
+      color: #93c5fd;
+      border-color: #3b82f6;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: #fff;
+      border-color: #3b82f6;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    }
+
+    .btn-secondary {
+      background: #1e293b;
+      color: #cbd5e1;
+      border-color: #334155;
+    }
+    .btn-secondary:hover {
+      background: #334155;
+      color: #fff;
+    }
+    .btn-secondary.active {
+      background: #1e3a8a !important;
+      color: #93c5fd !important;
+      border-color: #3b82f6 !important;
+    }
+
+    /* Badges */
+    .badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .up { color: #4ade80 !important; }
+    .down { color: #f87171 !important; }
+
+    /* Strategy Editor Card */
+    .strategy-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+
+    .prompt-box {
+      width: 100%;
+      min-height: 85px;
+      background: #090e1a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: #f1f5f9;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+    .prompt-box:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+
+    /* Preset Buttons Bar */
+    .preset-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .preset-btn {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #cbd5e1;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+    .preset-btn:hover {
+      background: #334155;
+      color: #fff;
+    }
+    .preset-btn.active {
+      background: #1e3a8a;
+      color: #93c5fd;
+      border-color: #3b82f6;
+      font-weight: 700;
+    }
+
+    /* Params Grid */
+    .params-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      padding-top: 10px;
+      border-top: 1px solid #1e293b;
+    }
+
+    .param-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .param-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .param-select, .param-input {
+      background: #090e1a;
+      border: 1px solid #334155;
+      color: #fff;
+      padding: 7px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      outline: none;
+    }
+    .param-select:focus, .param-input:focus {
+      border-color: #3b82f6;
+    }
+
+    /* 4 KPI Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    /* Tables */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 12px;
+    }
+
+    th {
+      background: #0b1120;
+      padding: 10px 14px;
+      color: var(--text-muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #1e293b;
+      white-space: nowrap;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: rgba(30, 41, 59, 0.4);
+    }
+
+    /* Chart & Canvas */
+    .chart-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Toast */
+    #toastMsg {
+      display: none;
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e293b;
+      border: 1px solid #3b82f6;
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      font-size: 13px;
+      font-weight: 700;
+      z-index: 99999;
+      align-items: center;
+      gap: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 600px) {
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Top Header -->
+    <div class="top-bar">
+      <div class="brand-group">
+        <h1 class="brand-title">⚡ Quantitative Strategy Backtester</h1>
+        <span class="badge" style="background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3);">Intraday Pivot Engine</span>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="nav-tabs">
+        <a href="/banknifty" class="nav-tab-link">🏦 Bank Nifty Options Terminal</a>
+        <a href="/" class="nav-tab-link">📈 NSE Equity Screener</a>
+        <a href="/backtest" class="nav-tab-link active">📊 Custom Strategy Backtest</a>
+      </div>
+    </div>
+
+    <!-- Strategy Rule Definition Box (Any Strategy Input) -->
+    <div class="strategy-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <div>
+          <h2 style="font-size: 15px; font-weight: 800; color: #fff;">📝 Strategy Rules Definition</h2>
+          <span style="font-size: 11px; color: #94a3b8;">Enter or customize any trading rule below to run an instant quantitative backtest</span>
+        </div>
+        
+        <!-- Preset Buttons -->
+        <div class="preset-bar">
+          <span style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Presets:</span>
+          <button class="preset-btn active" onclick="loadPreset('r1_r2')">🎯 Pivot R1/R2 Breakout (15m)</button>
+          <button class="preset-btn" onclick="loadPreset('pivot_p')">⚡ Central Pivot P Breakout</button>
+          <button class="preset-btn" onclick="loadPreset('orb')">⏱️ 15-Min Opening Range (ORB)</button>
+          <button class="preset-btn" onclick="loadPreset('squeeze')">🌀 Volatility Squeeze (ATR)</button>
+        </div>
+      </div>
+
+      <!-- Strategy Rule Text Area -->
+      <textarea id="strategyPromptText" class="prompt-box" rows="3" placeholder="Enter your strategy rules here...">Long entry: When a 15-minute candle closes above the Pivot R1 level, enter a buy position at the open of the next candle. Set the profit target at R2.
+Short entry: When a 15-minute candle closes below the Pivot S1 level, enter a sell position at the open of the next candle. Set the profit target at S2.</textarea>
+
+      <!-- Strategy Execution Parameters -->
+      <div class="params-grid">
+        <div class="param-group">
+          <label class="param-label">Instrument</label>
+          <select id="paramSymbol" class="param-select">
+            <option value="%5ENSEBANK" selected>BANK NIFTY (^NSEBANK)</option>
+            <option value="%5ENSEI">NIFTY 50 (^NSEI)</option>
+          </select>
+        </div>
+
+        <div class="param-group">
+          <label class="param-label">Timeframe Interval</label>
+          <select id="paramInterval" class="param-select">
+            <option value="15m" selected>15 Minutes (15m)</option>
+            <option value="5m">5 Minutes (5m)</option>
+            <option value="30m">30 Minutes (30m)</option>
+            <option value="1h">1 Hour (60m)</option>
+          </select>
+        </div>
+
+        <div class="param-group">
+          <label class="param-label">Backtest Horizon</label>
+          <select id="paramRange" class="param-select" onchange="onRangeChange()">
+            <option value="60d" selected>Last 60 Days (~2 Months)</option>
+            <option value="1mo">Last 30 Days (1 Month)</option>
+            <option value="1w">Last 7 Days (1 Week)</option>
+            <option value="1d">Today (1 Day)</option>
+            <option value="custom">📅 Custom Date Range</option>
+          </select>
+        </div>
+
+        <div class="param-group">
+          <label class="param-label">Profit Target</label>
+          <select id="paramTarget" class="param-select">
+            <option value="R2_S2" selected>Pivot R2 (Long) / S2 (Short)</option>
+            <option value="R3_S3">Pivot R3 (Long) / S3 (Short)</option>
+            <option value="fixed_200">Fixed +200 Points</option>
+          </select>
+        </div>
+
+        <div class="param-group">
+          <label class="param-label">Stop-Loss Rule</label>
+          <select id="paramSL" class="param-select">
+            <option value="P" selected>Central Pivot P Level</option>
+            <option value="trigger_candle">Low/High of Trigger Candle</option>
+            <option value="r1_s1">Below R1 (Long) / Above S1 (Short)</option>
+            <option value="fixed_150">Fixed -150 Points</option>
+          </select>
+        </div>
+
+        <div class="param-group">
+          <label class="param-label">Max Trades / Day</label>
+          <select id="paramMaxTrades" class="param-select">
+            <option value="1" selected>Max 1 Trade Per Day</option>
+            <option value="0">Unlimited Re-entries</option>
+          </select>
+        </div>
+
+        <div class="param-group">
+          <label class="param-label">Lot Size / Capital</label>
+          <select id="paramLotSize" class="param-select">
+            <option value="15" selected>1 Lot (15 Qty)</option>
+            <option value="30">2 Lots (30 Qty)</option>
+            <option value="75">5 Lots (75 Qty)</option>
+            <option value="150">10 Lots (150 Qty)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Custom Date Row (Hidden by default) -->
+      <div id="customDateRow" style="display: none; align-items: center; gap: 10px; background: #090e1a; padding: 10px 14px; border-radius: 8px; border: 1px dashed #3b82f6;">
+        <span style="font-size: 12px; color: #94a3b8; font-weight: 700;">From:</span>
+        <input type="date" id="paramFromDate" class="param-input" />
+        <span style="font-size: 12px; color: #94a3b8; font-weight: 700;">To:</span>
+        <input type="date" id="paramToDate" class="param-input" />
+      </div>
+
+      <!-- Run Button Bar -->
+      <div style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; padding-top: 6px;">
+        <span id="backtestStatusText" style="font-size: 12px; color: #94a3b8;">Click button to execute quantitative simulation</span>
+        <button id="btnRunBacktest" class="btn btn-primary" onclick="runBacktestEngine()">
+          <span id="btnRunIcon">⚡</span>
+          <span id="btnRunLabel">Run Strategy Backtest</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Today's Live Pivot Levels Blueprint -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 18px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 14px; font-weight: 800; color: #fff;">🎯 Today's Live Floor Pivot Levels</span>
+          <span class="badge" id="todaySignalBadge" style="background: rgba(148,163,184,0.15); color: #cbd5e1;">Calculating...</span>
+        </div>
+        <div style="font-size: 12px; color: #94a3b8;">
+          Bank Nifty Spot: <b class="num" id="todaySpotPrice" style="color: #fff;">--</b>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
+        <div style="background: #090e1a; padding: 10px; border-radius: 8px; border-left: 3px solid #ef4444;">
+          <div style="font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase;">Short Target (S2)</div>
+          <div class="num down" id="todayS2" style="font-size: 16px; font-weight: 800;">₹--</div>
+        </div>
+        <div style="background: #090e1a; padding: 10px; border-radius: 8px; border-left: 3px solid #f87171;">
+          <div style="font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase;">Short Trigger (S1)</div>
+          <div class="num down" id="todayS1" style="font-size: 16px; font-weight: 800;">₹--</div>
+        </div>
+        <div style="background: #090e1a; padding: 10px; border-radius: 8px; border-left: 3px solid #3b82f6;">
+          <div style="font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase;">Central Pivot (P)</div>
+          <div class="num" id="todayP" style="font-size: 16px; font-weight: 800; color: #60a5fa;">₹--</div>
+        </div>
+        <div style="background: #090e1a; padding: 10px; border-radius: 8px; border-left: 3px solid #4ade80;">
+          <div style="font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase;">Long Trigger (R1)</div>
+          <div class="num up" id="todayR1" style="font-size: 16px; font-weight: 800;">₹--</div>
+        </div>
+        <div style="background: #090e1a; padding: 10px; border-radius: 8px; border-left: 3px solid #22c55e;">
+          <div style="font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase;">Long Target (R2)</div>
+          <div class="num up" id="todayR2" style="font-size: 16px; font-weight: 800;">₹--</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 KPI Performance Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card" style="border-top: 3px solid #22c55e;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Net P&L (₹)</span>
+          <span id="kpiPtsBadge" class="badge" style="background: rgba(34,197,94,0.15); color: #4ade80;">-- pts</span>
+        </div>
+        <span class="num up" id="kpiNetProfit" style="font-size: 24px; font-weight: 800;">₹--</span>
+        <span id="kpiLotSub" style="font-size: 11px; color: var(--text-muted);">1 Lot (15 Qty)</span>
+      </div>
+
+      <div class="kpi-card" style="border-top: 3px solid #38bdf8;">
+        <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Win Rate</span>
+        <span class="num" id="kpiWinRate" style="font-size: 24px; font-weight: 800; color: #38bdf8;">--%</span>
+        <span id="kpiTradesCount" style="font-size: 11px; color: var(--text-muted);">-- Wins / -- Losses (-- Trades)</span>
+      </div>
+
+      <div class="kpi-card" style="border-top: 3px solid #c084fc;">
+        <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Profit Factor & Payoff</span>
+        <span class="num up" id="kpiProfitFactor" style="font-size: 24px; font-weight: 800; color: #c084fc;">--</span>
+        <span id="kpiPayoffSub" style="font-size: 11px; color: var(--text-muted);">Payoff: --x &bull; Gross --x Losses</span>
+      </div>
+
+      <div class="kpi-card" style="border-top: 3px solid #fbbf24;">
+        <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Max Drawdown & Return</span>
+        <span class="num down" id="kpiDrawdown" style="font-size: 24px; font-weight: 800;">-- pts</span>
+        <span id="kpiExpectancy" style="font-size: 11px; color: var(--text-muted);">Avg Return: -- pts / trade</span>
+      </div>
+    </div>
+
+    <!-- Cumulative P&L Equity Curve Chart -->
+    <div class="chart-container">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <div>
+          <h3 style="font-size: 14px; font-weight: 800; color: #fff;">📈 Cumulative Equity Growth Curve</h3>
+          <span style="font-size: 11px; color: #94a3b8;">Visual simulation of account profit & loss progression trade-by-trade</span>
+        </div>
+        <span id="chartPeakText" style="font-size: 11px; color: #38bdf8; font-weight: 700;"></span>
+      </div>
+
+      <div style="height: 180px; width: 100%; position: relative;">
+        <canvas id="equityCanvas" style="width: 100%; height: 100%;"></canvas>
+      </div>
+    </div>
+
+    <!-- Interactive Backtrack Trade Log Table -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 18px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+        <div>
+          <h3 style="font-size: 14px; font-weight: 800; color: #fff;" id="tableTitle">📋 Strategy Backtrack Trade Log</h3>
+          <span style="font-size: 11px; color: #94a3b8;">Detailed audit trail of each 15-minute breakout trade</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <div class="btn-group" style="display: inline-flex;">
+            <button id="fltAll" class="btn btn-secondary active" onclick="setTableFilter('all')">All (<span id="cntAll">0</span>)</button>
+            <button id="fltWins" class="btn btn-secondary" onclick="setTableFilter('wins')">🟢 Wins (<span id="cntWins">0</span>)</button>
+            <button id="fltLosses" class="btn btn-secondary" onclick="setTableFilter('losses')">🔴 Losses (<span id="cntLosses">0</span>)</button>
+          </div>
+
+          <input type="text" id="tradeSearch" placeholder="Search date (YYYY-MM)..." oninput="renderTradesTable()" style="background: #090e1a; border: 1px solid #334155; color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 11px; width: 150px;" />
+
+          <button class="btn btn-secondary" style="font-size: 11px; padding: 4px 10px;" onclick="exportTradesCSV()">⬇ Export CSV</button>
+        </div>
+      </div>
+
+      <div class="table-container" style="max-height: 420px;">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 45px;">#</th>
+              <th>Date</th>
+              <th>Candle Time</th>
+              <th>Type</th>
+              <th>Trigger Level</th>
+              <th>Entry (₹)</th>
+              <th>Exit (₹)</th>
+              <th>Target</th>
+              <th>SL</th>
+              <th>Exit Reason</th>
+              <th>Points</th>
+              <th>Net P&L (₹)</th>
+              <th>Cumul P&L (₹)</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody id="tradesTbody">
+            <tr><td colspan="14" style="text-align: center; padding: 24px; color: #94a3b8;">Click <b>Run Strategy Backtest</b> to calculate historical trades.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Live TradingView Chart Widget (15-Minute Frame) -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h3 style="font-size: 14px; font-weight: 700; color: #fff;">📈 Bank Nifty 15-Minute Candlestick Chart</h3>
+        <span style="font-size: 11px; color: #94a3b8;">15m Timeframe &bull; Live TradingView</span>
+      </div>
+      <div style="height: 420px; width: 100%; border-radius: 8px; overflow: hidden; border: 1px solid #1e293b;">
+        <iframe 
+          src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_bnf_15m&symbol=NSE%3ABANKNIFTY&interval=15&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=%5B%5D&theme=dark&style=1&timezone=Asia%2FKolkata&withdateranges=1&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=en&utm_source=localhost"
+          style="width: 100%; height: 100%; border: none;"
+          title="TradingView Bank Nifty 15m Chart">
+        </iframe>
+      </div>
+    </div>
+
+    <!-- Pine Script Generator Card -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+        <div>
+          <h3 style="font-size: 14px; font-weight: 800; color: #fff;">🌲 TradingView Pine Script v5 Code Generator</h3>
+          <span style="font-size: 11px; color: #94a3b8;">Copy and paste this script directly into TradingView Pine Editor on 15-minute BANKNIFTY chart</span>
+        </div>
+        <button class="btn btn-primary" id="btnCopyPine" onclick="copyPineScript()">📋 Copy Pine Script</button>
+      </div>
+
+      <div id="pineCodeBox" style="background: #090e1a; border: 1px solid #1e293b; border-radius: 8px; padding: 14px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #cbd5e1; max-height: 250px; overflow-y: auto; white-space: pre; line-height: 1.5;">Generating Pine Script for strategy...</div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastMsg">
+    <span id="toastIcon">⚡</span>
+    <span id="toastText">Action successful</span>
+  </div>
+
+  <script>
+    // State
+    let currentBacktestData = null;
+    let activeFilter = 'all';
+
+    const presets = {
+      r1_r2: {
+        text: `Long entry: When a 15-minute candle closes above the Pivot R1 level, enter a buy position at the open of the next candle. Set the profit target at R2.\nShort entry: When a 15-minute candle closes below the Pivot S1 level, enter a sell position at the open of the next candle. Set the profit target at S2.`,
+        interval: '15m',
+        target: 'R2_S2',
+        sl: 'P'
+      },
+      pivot_p: {
+        text: `Long entry: When candle closes above Central Pivot P, buy at next open with target at R1.\nShort entry: When candle closes below Central Pivot P, sell at next open with target at S1.`,
+        interval: '15m',
+        target: 'R2_S2',
+        sl: 'trigger_candle'
+      },
+      orb: {
+        text: `Opening Range Breakout (ORB): Mark 9:15-9:30 AM 15-minute High & Low. Buy above High with target +200 pts, Sell below Low with target -200 pts.`,
+        interval: '15m',
+        target: 'fixed_200',
+        sl: 'fixed_150'
+      },
+      squeeze: {
+        text: `Volatility Squeeze Breakout: When yesterday daily range < 0.85x ATR14, enter Long if 15m candle breaks above Previous Day High, enter Short if below Previous Day Low.`,
+        interval: '15m',
+        target: 'R2_S2',
+        sl: 'P'
+      }
+    };
+
+    function loadPreset(key) {
+      const p = presets[key];
+      if (!p) return;
+      document.getElementById('strategyPromptText').value = p.text;
+      document.getElementById('paramInterval').value = p.interval;
+      document.getElementById('paramTarget').value = p.target;
+      document.getElementById('paramSL').value = p.sl;
+
+      document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      showToast('Loaded preset: ' + key.toUpperCase(), '⚡');
+      runBacktestEngine();
+    }
+
+    function onRangeChange() {
+      const val = document.getElementById('paramRange').value;
+      const customRow = document.getElementById('customDateRow');
+      if (val === 'custom') {
+        customRow.style.display = 'flex';
+        const d = new Date();
+        document.getElementById('paramToDate').value = d.toISOString().split('T')[0];
+        d.setMonth(d.getMonth() - 1);
+        document.getElementById('paramFromDate').value = d.toISOString().split('T')[0];
+      } else {
+        customRow.style.display = 'none';
+      }
+    }
+
+    async function runBacktestEngine() {
+      const btn = document.getElementById('btnRunBacktest');
+      const label = document.getElementById('btnRunLabel');
+      const statusText = document.getElementById('backtestStatusText');
+
+      label.innerText = 'Calculating...';
+      btn.style.opacity = '0.7';
+      btn.disabled = true;
+      statusText.innerText = 'Fetching intraday candles and simulating breakout rules...';
+
+      const symbol = document.getElementById('paramSymbol').value;
+      const interval = document.getElementById('paramInterval').value;
+      const rangeVal = document.getElementById('paramRange').value;
+      const slMode = document.getElementById('paramSL').value;
+      const targetMode = document.getElementById('paramTarget').value;
+      const maxTrades = document.getElementById('paramMaxTrades').value;
+      const lots = document.getElementById('paramLotSize').value;
+      
+      let query = `/api/pivot-backtest?symbol=${symbol}&interval=${interval}&slMode=${slMode}&targetMode=${targetMode}&maxTrades=${maxTrades}&lots=${lots}`;
+      if (rangeVal === 'custom') {
+        const from = document.getElementById('paramFromDate').value;
+        const to = document.getElementById('paramToDate').value;
+        query += `&range=60d&from=${from}&to=${to}`;
+      } else {
+        query += `&range=${rangeVal}`;
+      }
+
+      try {
+        const res = await fetch(query);
+        const data = await res.json();
+        if (!data || !data.success) {
+          throw new Error(data?.message || 'Failed to execute backtest');
+        }
+
+        currentBacktestData = data;
+        renderKPIs(data.stats, lots);
+        renderTodayBlueprint(data.todaySetup);
+        renderTradesTable();
+        renderEquityChart(data.equityCurve);
+        generatePineScript(slMode, targetMode);
+
+        statusText.innerText = `Backtest complete: ${data.stats.totalTrades} trades simulated across ${data.range}.`;
+        showToast('Strategy Backtest Executed Successfully! 🚀', '✅');
+      } catch (err) {
+        console.error('Backtest error:', err);
+        statusText.innerText = 'Error: ' + err.message;
+        showToast('Failed to run backtest: ' + err.message, '⚠️');
+      } finally {
+        label.innerText = 'Run Strategy Backtest';
+        btn.style.opacity = '1';
+        btn.disabled = false;
+      }
+    }
+
+    function renderKPIs(stats, lots) {
+      if (!stats) return;
+      const pnlEl = document.getElementById('kpiNetProfit');
+      const ptsBadge = document.getElementById('kpiPtsBadge');
+      const lotSub = document.getElementById('kpiLotSub');
+
+      const sign = stats.netProfitInr >= 0 ? '+' : '';
+      const pnlClass = stats.netProfitInr >= 0 ? 'up' : 'down';
+      pnlEl.className = 'num ' + pnlClass;
+      pnlEl.innerText = `${sign}₹${Math.abs(stats.netProfitInr).toLocaleString('en-IN')}`;
+
+      const ptsSign = stats.netPoints >= 0 ? '+' : '';
+      ptsBadge.innerText = `${ptsSign}${stats.netPoints.toLocaleString('en-IN')} pts`;
+      ptsBadge.style.background = stats.netPoints >= 0 ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)';
+      ptsBadge.style.color = stats.netPoints >= 0 ? '#4ade80' : '#f87171';
+
+      const lotCount = lots / 15;
+      lotSub.innerText = `Based on ${lotCount} Lot${lotCount > 1 ? 's' : ''} (${lots} Qty)`;
+
+      document.getElementById('kpiWinRate').innerText = `${stats.winRate}%`;
+      document.getElementById('kpiTradesCount').innerText = `${stats.wins} Wins / ${stats.losses} Losses (${stats.totalTrades} Trades)`;
+
+      const pfEl = document.getElementById('kpiProfitFactor');
+      pfEl.innerText = stats.profitFactor;
+      pfEl.className = Number(stats.profitFactor) >= 1.5 ? 'num up' : (Number(stats.profitFactor) >= 1 ? 'num' : 'num down');
+      document.getElementById('kpiPayoffSub').innerText = `Payoff: ${stats.payoffRatio}x &bull; Gross ${stats.profitFactor}x Losses`;
+
+      document.getElementById('kpiDrawdown').innerText = `-${stats.maxDrawdownPts.toLocaleString('en-IN')} pts (-₹${stats.maxDrawdownInr.toLocaleString('en-IN')})`;
+      const expSign = stats.avgPoints >= 0 ? '+' : '';
+      document.getElementById('kpiExpectancy').innerText = `Avg Return: ${expSign}${stats.avgPoints} pts (${expSign}₹${stats.avgInr.toLocaleString('en-IN')}) / trade`;
+
+      document.getElementById('cntAll').innerText = stats.totalTrades;
+      document.getElementById('cntWins').innerText = stats.wins;
+      document.getElementById('cntLosses').innerText = stats.losses;
+    }
+
+    function renderTodayBlueprint(setup) {
+      if (!setup || !setup.todayPivots) return;
+      const p = setup.todayPivots;
+      document.getElementById('todayS2').innerText = '₹' + p.S2.toLocaleString('en-IN');
+      document.getElementById('todayS1').innerText = '₹' + p.S1.toLocaleString('en-IN');
+      document.getElementById('todayP').innerText = '₹' + p.P.toLocaleString('en-IN');
+      document.getElementById('todayR1').innerText = '₹' + p.R1.toLocaleString('en-IN');
+      document.getElementById('todayR2').innerText = '₹' + p.R2.toLocaleString('en-IN');
+
+      if (setup.livePrice) {
+        document.getElementById('todaySpotPrice').innerText = '₹' + setup.livePrice.toLocaleString('en-IN');
+      }
+
+      const badge = document.getElementById('todaySignalBadge');
+      badge.innerText = setup.todaySignal;
+      if (setup.todaySignalType === 'BUY') {
+        badge.style.background = 'rgba(34,197,94,0.2)';
+        badge.style.color = '#4ade80';
+        badge.style.border = '1px solid rgba(34,197,94,0.4)';
+      } else if (setup.todaySignalType === 'SELL') {
+        badge.style.background = 'rgba(239,68,68,0.2)';
+        badge.style.color = '#f87171';
+        badge.style.border = '1px solid rgba(239,68,68,0.4)';
+      } else {
+        badge.style.background = 'rgba(148,163,184,0.15)';
+        badge.style.color = '#cbd5e1';
+        badge.style.border = '1px solid rgba(148,163,184,0.3)';
+      }
+    }
+
+    function setTableFilter(flt) {
+      activeFilter = flt;
+      document.getElementById('fltAll').className = 'btn btn-secondary' + (flt === 'all' ? ' active' : '');
+      document.getElementById('fltWins').className = 'btn btn-secondary' + (flt === 'wins' ? ' active' : '');
+      document.getElementById('fltLosses').className = 'btn btn-secondary' + (flt === 'losses' ? ' active' : '');
+      renderTradesTable();
+    }
+
+    function renderTradesTable() {
+      const tbody = document.getElementById('tradesTbody');
+      if (!tbody) return;
+      if (!currentBacktestData || !currentBacktestData.trades) {
+        tbody.innerHTML = `<tr><td colspan="14" style="text-align:center;padding:24px;color:#94a3b8;">No backtest data loaded.</td></tr>`;
+        return;
+      }
+
+      let list = currentBacktestData.trades;
+      if (activeFilter === 'wins') list = list.filter(t => t.win);
+      else if (activeFilter === 'losses') list = list.filter(t => !t.win);
+
+      const searchVal = document.getElementById('tradeSearch').value.trim().toLowerCase();
+      if (searchVal) {
+        list = list.filter(t => t.date.includes(searchVal) || t.type.toLowerCase().includes(searchVal) || t.exitReason.toLowerCase().includes(searchVal));
+      }
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="14" style="text-align:center;padding:24px;color:#64748b;">No trades found matching criteria.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map((t, idx) => {
+        const isLong = t.type.includes('LONG');
+        const badgeBg = isLong ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)';
+        const badgeClr = isLong ? '#4ade80' : '#f87171';
+        const plSign = t.netProfitInr >= 0 ? '+' : '';
+        const plClass = t.netProfitInr >= 0 ? 'up' : 'down';
+        const runSign = t.cumulativeInr >= 0 ? '+' : '';
+        const runClass = t.cumulativeInr >= 0 ? 'up' : 'down';
+        const resultBadge = t.win 
+          ? '<span class="badge" style="background:rgba(34,197,94,0.2);color:#4ade80;border:1px solid rgba(34,197,94,0.4);">WIN</span>'
+          : '<span class="badge" style="background:rgba(239,68,68,0.2);color:#f87171;border:1px solid rgba(239,68,68,0.4);">LOSS</span>';
+
+        return `
+          <tr>
+            <td style="color:#64748b;">#${t.id || (idx + 1)}</td>
+            <td><b>${t.date}</b></td>
+            <td class="num" style="color:#94a3b8;">${t.entryTime}</td>
+            <td><span class="badge" style="background:${badgeBg};color:${badgeClr};font-weight:700;">${t.type}</span></td>
+            <td style="font-size:11px;color:#93c5fd;">${t.triggerLevel}</td>
+            <td class="num">₹${t.entry.toLocaleString('en-IN')}</td>
+            <td class="num">₹${t.exit.toLocaleString('en-IN')}</td>
+            <td class="num" style="color:#4ade80;">₹${t.target.toLocaleString('en-IN')}</td>
+            <td class="num" style="color:#f87171;">₹${t.sl.toLocaleString('en-IN')}</td>
+            <td style="font-size:11px;color:#cbd5e1;">${t.exitReason}</td>
+            <td class="num ${plClass}"><b>${plSign}${t.points} pts</b></td>
+            <td class="num ${plClass}" style="font-weight:800;">${plSign}₹${t.netProfitInr.toLocaleString('en-IN')}</td>
+            <td class="num ${runClass}" style="font-weight:700;">${runSign}₹${t.cumulativeInr.toLocaleString('en-IN')}</td>
+            <td>${resultBadge}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderEquityChart(equityCurve) {
+      const canvas = document.getElementById('equityCanvas');
+      if (!canvas || !equityCurve || !equityCurve.length) return;
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+
+      const w = rect.width;
+      const h = rect.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const inrs = equityCurve.map(e => e.cumulInr);
+      const minInr = Math.min(0, ...inrs);
+      const maxInr = Math.max(1000, ...inrs);
+      const range = maxInr - minInr || 1;
+
+      // Draw zero line
+      const zeroY = h - ((0 - minInr) / range) * (h - 30) - 15;
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(0, zeroY);
+      ctx.lineTo(w, zeroY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Draw equity line
+      ctx.beginPath();
+      equityCurve.forEach((e, idx) => {
+        const x = (idx / (equityCurve.length - 1 || 1)) * (w - 20) + 10;
+        const y = h - ((e.cumulInr - minInr) / range) * (h - 30) - 15;
+        if (idx === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+
+      const lastInr = inrs[inrs.length - 1];
+      ctx.strokeStyle = lastInr >= 0 ? '#22c55e' : '#ef4444';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      document.getElementById('chartPeakText').innerText = `Peak Equity: ₹${maxInr.toLocaleString('en-IN')} | Current: ₹${lastInr.toLocaleString('en-IN')}`;
+    }
+
+    function generatePineScript(slMode, targetMode) {
+      const code = `//@version=5
+strategy("Bank Nifty Pivot R1/R2 Breakout [Intraday 15m]", overlay=true, margin_long=100, margin_short=100)
+
+// Daily Pivots Calculation
+prevHigh  = request.security(syminfo.tickerid, "D", high[1], barmerge.gaps_off, barmerge.lookahead_on)
+prevLow   = request.security(syminfo.tickerid, "D", low[1], barmerge.gaps_off, barmerge.lookahead_on)
+prevClose = request.security(syminfo.tickerid, "D", close[1], barmerge.gaps_off, barmerge.lookahead_on)
+
+P  = (prevHigh + prevLow + prevClose) / 3.0
+R1 = (2.0 * P) - prevLow
+S1 = (2.0 * P) - prevHigh
+R2 = P + (prevHigh - prevLow)
+S2 = P - (prevHigh - prevLow)
+
+plot(P,  "Pivot P",  color=color.blue,   linewidth=2)
+plot(R1, "Pivot R1", color=color.green,  linewidth=1)
+plot(R2, "Pivot R2", color=color.lime,   linewidth=2)
+plot(S1, "Pivot S1", color=color.orange, linewidth=1)
+plot(S2, "Pivot S2", color=color.red,    linewidth=2)
+
+// Intraday Session Filter (Only 9:15 to 14:45 IST)
+isInSession = not na(time(timeframe.period, "0915-1445:23456"))
+isEOD       = not na(time(timeframe.period, "1515-1530:23456"))
+
+// Strategy Entry Signals on 15m Close
+longCondition  = ta.crossover(close, R1) and isInSession and strategy.position_size == 0
+shortCondition = ta.crossunder(close, S1) and isInSession and strategy.position_size == 0
+
+if (longCondition)
+    strategy.entry("Long_R1", strategy.long)
+    strategy.exit("TP_SL_Long", "Long_R1", limit=R2, stop=P)
+
+if (shortCondition)
+    strategy.entry("Short_S1", strategy.short)
+    strategy.exit("TP_SL_Short", "Short_S1", limit=S2, stop=P)
+
+// EOD Square-off
+if (isEOD)
+    strategy.close_all("EOD 3:15 PM")
+`;
+      document.getElementById('pineCodeBox').innerText = code;
+    }
+
+    function copyPineScript() {
+      const code = document.getElementById('pineCodeBox').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.getElementById('btnCopyPine');
+        btn.innerText = '✅ Copied!';
+        showToast('Pine Script copied to clipboard!', '📋');
+        setTimeout(() => { btn.innerText = '📋 Copy Pine Script'; }, 2000);
+      });
+    }
+
+    function exportTradesCSV() {
+      if (!currentBacktestData || !currentBacktestData.trades || !currentBacktestData.trades.length) {
+        showToast('No trades to export', '⚠️');
+        return;
+      }
+      let csv = 'Trade_ID,Date,Time,Type,Trigger_Level,Entry,Exit,Target,Stop_Loss,Exit_Reason,Points,Net_PL_INR,Cumulative_INR,Result\n';
+      currentBacktestData.trades.forEach((t, i) => {
+        csv += `${t.id || (i+1)},${t.date},${t.entryTime},"${t.type}","${t.triggerLevel}",${t.entry},${t.exit},${t.target},${t.sl},"${t.exitReason}",${t.points},${t.netProfitInr},${t.cumulativeInr},${t.win ? 'WIN' : 'LOSS'}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pivot_r1_r2_backtest_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast('Backtest CSV Downloaded!', '📥');
+    }
+
+    function showToast(text, icon = '⚡') {
+      const el = document.getElementById('toastMsg');
+      document.getElementById('toastIcon').innerText = icon;
+      document.getElementById('toastText').innerText = text;
+      el.style.display = 'flex';
+      setTimeout(() => { el.style.display = 'none'; }, 2800);
+    }
+
+    // Auto-run on load
+    window.addEventListener('DOMContentLoaded', () => {
+      runBacktestEngine();
+    });
+  </script>
+</body>
+</html>

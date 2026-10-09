@@ -6,6 +6,7 @@ const PORT = process.env.PORT || parseInt(process.argv[2], 10) || 8888;
 const stocksTxtPath = path.join(__dirname, 'stocks.txt');
 const indexHtmlPath = path.join(__dirname, 'index.html');
 const bankNiftyHtmlPath = path.join(__dirname, 'banknifty.html');
+const backtestHtmlPath = path.join(__dirname, 'backtest.html');
 const pineScriptPath = path.join(__dirname, 'BankNifty_Volatility_Squeeze_Strategy.pine');
 
 // ==============================================================================
@@ -618,6 +619,308 @@ async function getBankNiftyStrategyData() {
   }
 }
 
+// ==============================================================================
+// CUSTOM STRATEGY QUANTITATIVE BACKTEST ENGINE (PIVOT R1/R2 & S1/S2 SYSTEM)
+// ==============================================================================
+let cachedPivot15m = {};
+let cachedPivotDaily = {};
+let lastPivotCacheTime = {};
+
+async function runPivotBacktest(options = {}) {
+  const symbol = options.symbol || '%5ENSEBANK';
+  const interval = options.interval || '15m';
+  const range = options.range || '60d';
+  const slMode = options.slMode || 'P'; // 'P', 'trigger_candle', 'r1_s1', 'fixed_150'
+  const targetMode = options.targetMode || 'R2_S2'; // 'R2_S2', 'R3_S3', 'fixed_200'
+  const maxTradesPerDay = options.maxTradesPerDay !== undefined ? options.maxTradesPerDay : 1;
+  const lotSize = options.lotSize || 15;
+  const fromDate = options.from || null;
+  const toDate = options.to || null;
+
+  const cacheKey = `${symbol}_${interval}_${range}`;
+  const now = Date.now();
+  if (!cachedPivot15m[cacheKey] || (now - (lastPivotCacheTime[cacheKey] || 0) > 45000)) {
+    const [resIntra, resDaily] = await Promise.all([
+      fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=${range}&interval=${interval}`, { headers: { 'User-Agent': 'Mozilla/5.0' } }).then(r => r.json()),
+      fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1y&interval=1d`, { headers: { 'User-Agent': 'Mozilla/5.0' } }).then(r => r.json())
+    ]);
+    cachedPivot15m[cacheKey] = resIntra;
+    cachedPivotDaily[symbol] = resDaily;
+    lastPivotCacheTime[cacheKey] = now;
+  }
+
+  const rawIntra = cachedPivot15m[cacheKey];
+  const rawDaily = cachedPivotDaily[symbol];
+  if (!rawIntra?.chart?.result?.[0] || !rawDaily?.chart?.result?.[0]) {
+    throw new Error('Failed to fetch historical market data for ' + symbol);
+  }
+
+  const qIntra = rawIntra.chart.result[0].indicators.quote[0];
+  const tsIntra = rawIntra.chart.result[0].timestamp;
+  const meta = rawIntra.chart.result[0].meta;
+
+  const qDaily = rawDaily.chart.result[0].indicators.quote[0];
+  const tsDaily = rawDaily.chart.result[0].timestamp;
+
+  // Build Daily Bar Map
+  const dailyMap = {};
+  for (let i = 0; i < tsDaily.length; i++) {
+    if (qDaily.close[i] != null && qDaily.high[i] != null && qDaily.low[i] != null) {
+      const d = new Date(tsDaily[i] * 1000);
+      const iso = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+      dailyMap[iso] = {
+        open: qDaily.open[i],
+        high: qDaily.high[i],
+        low: qDaily.low[i],
+        close: qDaily.close[i]
+      };
+    }
+  }
+
+  const dailyDates = Object.keys(dailyMap).sort();
+  const pivots = {};
+  for (let i = 1; i < dailyDates.length; i++) {
+    const today = dailyDates[i];
+    const prev = dailyDates[i - 1];
+    const pb = dailyMap[prev];
+    const p = (pb.high + pb.low + pb.close) / 3;
+    const r1 = 2 * p - pb.low;
+    const s1 = 2 * p - pb.high;
+    const r2 = p + (pb.high - pb.low);
+    const s2 = p - (pb.high - pb.low);
+    const r3 = pb.high + 2 * (p - pb.low);
+    const s3 = pb.low - 2 * (pb.high - p);
+    pivots[today] = {
+      P: Math.round(p),
+      R1: Math.round(r1),
+      R2: Math.round(r2),
+      R3: Math.round(r3),
+      S1: Math.round(s1),
+      S2: Math.round(s2),
+      S3: Math.round(s3),
+      prevClose: Math.round(pb.close),
+      prevHigh: Math.round(pb.high),
+      prevLow: Math.round(pb.low),
+      prevDate: prev
+    };
+  }
+
+  // Parse Intra Candles
+  const candles = [];
+  for (let i = 0; i < tsIntra.length; i++) {
+    if (qIntra.close[i] != null && qIntra.open[i] != null) {
+      const d = new Date(tsIntra[i] * 1000);
+      const iso = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+      const timeStr = d.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: false });
+      candles.push({
+        timestamp: tsIntra[i],
+        date: iso,
+        timeStr,
+        open: Math.round(qIntra.open[i]),
+        high: Math.round(qIntra.high[i]),
+        low: Math.round(qIntra.low[i]),
+        close: Math.round(qIntra.close[i])
+      });
+    }
+  }
+
+  // Filter candles by custom date if requested
+  const filteredCandles = candles.filter(c => {
+    if (fromDate && c.date < fromDate) return false;
+    if (toDate && c.date > toDate) return false;
+    return true;
+  });
+
+  const trades = [];
+  let currentDay = '';
+  let dayTradesCount = 0;
+  let pos = null;
+  let pending = null;
+
+  for (let i = 0; i < filteredCandles.length; i++) {
+    const c = filteredCandles[i];
+    if (c.date !== currentDay) {
+      currentDay = c.date;
+      dayTradesCount = 0;
+      pos = null;
+      pending = null;
+    }
+    const piv = pivots[c.date];
+    if (!piv) continue;
+
+    // Execute pending signal on open of current candle
+    if (pending && !pos && (maxTradesPerDay === 0 || dayTradesCount < maxTradesPerDay)) {
+      let targetPrice = pending.type === 'BUY' ? piv.R2 : piv.S2;
+      if (targetMode === 'R3_S3') targetPrice = pending.type === 'BUY' ? piv.R3 : piv.S3;
+      else if (targetMode === 'fixed_200') targetPrice = pending.type === 'BUY' ? c.open + 200 : c.open - 200;
+
+      let slPrice = piv.P;
+      if (slMode === 'r1_s1') slPrice = pending.type === 'BUY' ? piv.R1 - 100 : piv.S1 + 100;
+      else if (slMode === 'fixed_150') slPrice = pending.type === 'BUY' ? c.open - 150 : c.open + 150;
+      else if (slMode === 'trigger_candle') slPrice = pending.type === 'BUY' ? pending.triggerLow : pending.triggerHigh;
+
+      pos = {
+        id: trades.length + 1,
+        type: pending.type === 'BUY' ? 'LONG (BUY)' : 'SHORT (SELL)',
+        date: c.date,
+        entryTime: c.timeStr,
+        triggerLevel: pending.type === 'BUY' ? `R1 (₹${piv.R1})` : `S1 (₹${piv.S1})`,
+        entry: c.open,
+        target: Math.round(targetPrice),
+        sl: Math.round(slPrice),
+        pivots: piv
+      };
+      pending = null;
+      dayTradesCount++;
+    }
+
+    // Check exit conditions
+    if (pos) {
+      const isEOD = c.timeStr >= '15:15:00' || (i + 1 < filteredCandles.length && filteredCandles[i + 1].date !== c.date);
+      if (pos.type.includes('LONG')) {
+        if (c.high >= pos.target) {
+          trades.push({
+            ...pos,
+            exitDate: c.date,
+            exitTime: c.timeStr,
+            exit: pos.target,
+            exitReason: 'Target R2 Hit 🎯',
+            points: pos.target - pos.entry,
+            win: true
+          });
+          pos = null;
+        } else if (c.low <= pos.sl) {
+          trades.push({
+            ...pos,
+            exitDate: c.date,
+            exitTime: c.timeStr,
+            exit: pos.sl,
+            exitReason: 'Stop Loss Hit 🛑',
+            points: pos.sl - pos.entry,
+            win: false
+          });
+          pos = null;
+        } else if (isEOD) {
+          trades.push({
+            ...pos,
+            exitDate: c.date,
+            exitTime: c.timeStr,
+            exit: c.close,
+            exitReason: 'EOD Square-Off ⏱️',
+            points: c.close - pos.entry,
+            win: c.close > pos.entry
+          });
+          pos = null;
+        }
+      } else {
+        if (c.low <= pos.target) {
+          trades.push({
+            ...pos,
+            exitDate: c.date,
+            exitTime: c.timeStr,
+            exit: pos.target,
+            exitReason: 'Target S2 Hit 🎯',
+            points: pos.entry - pos.target,
+            win: true
+          });
+          pos = null;
+        } else if (c.high >= pos.sl) {
+          trades.push({
+            ...pos,
+            exitDate: c.date,
+            exitTime: c.timeStr,
+            exit: pos.sl,
+            exitReason: 'Stop Loss Hit 🛑',
+            points: pos.entry - pos.sl,
+            win: false
+          });
+          pos = null;
+        } else if (isEOD) {
+          trades.push({
+            ...pos,
+            exitDate: c.date,
+            exitTime: c.timeStr,
+            exit: c.close,
+            exitReason: 'EOD Square-Off ⏱️',
+            points: pos.entry - c.close,
+            win: pos.entry > c.close
+          });
+          pos = null;
+        }
+      }
+    }
+
+    // Check entry triggers at close of 15m candle (before 2:45 PM)
+    if (!pos && !pending && (maxTradesPerDay === 0 || dayTradesCount < maxTradesPerDay) && c.timeStr < '14:45:00') {
+      if (c.close > piv.R1) {
+        pending = { type: 'BUY', triggerLow: c.low, triggerHigh: c.high };
+      } else if (c.close < piv.S1) {
+        pending = { type: 'SELL', triggerLow: c.low, triggerHigh: c.high };
+      }
+    }
+  }
+
+  // Calculate Cumulative P&L and Equity Curve
+  let runningPts = 0;
+  let runningInr = 0;
+  const equityCurve = [];
+  trades.forEach(t => {
+    t.netProfitInr = t.points * lotSize;
+    runningPts += t.points;
+    runningInr += t.netProfitInr;
+    t.cumulativePoints = runningPts;
+    t.cumulativeInr = runningInr;
+    equityCurve.push({
+      id: t.id,
+      date: t.date,
+      time: t.entryTime,
+      type: t.type,
+      pts: t.points,
+      inr: t.netProfitInr,
+      cumulPts: runningPts,
+      cumulInr: runningInr
+    });
+  });
+
+  const stats = computeTradeStats(trades, lotSize);
+
+  // Latest / Today's Setup Info
+  const latestDate = dailyDates[dailyDates.length - 1];
+  const todayPivots = pivots[latestDate] || null;
+  const livePrice = meta.regularMarketPrice || (candles.length ? candles[candles.length - 1].close : null);
+
+  let todaySignal = 'WAITING (Inside S1 - R1 Zone)';
+  let todaySignalType = 'WAIT';
+  if (todayPivots && livePrice) {
+    if (livePrice > todayPivots.R1) {
+      todaySignal = `🟢 BULLISH BREAKOUT: Trading Above R1 (₹${todayPivots.R1})`;
+      todaySignalType = 'BUY';
+    } else if (livePrice < todayPivots.S1) {
+      todaySignal = `🔴 BEARISH BREAKDOWN: Trading Below S1 (₹${todayPivots.S1})`;
+      todaySignalType = 'SELL';
+    }
+  }
+
+  return {
+    success: true,
+    symbol: symbol.replace('%5E', '^'),
+    interval,
+    range,
+    lotSize,
+    stats,
+    trades,
+    equityCurve,
+    pivots,
+    todaySetup: {
+      date: latestDate,
+      livePrice,
+      todayPivots,
+      todaySignal,
+      todaySignalType
+    }
+  };
+}
+
 function getStockList() {
   if (fs.existsSync(stocksTxtPath)) {
     const lines = fs.readFileSync(stocksTxtPath, 'utf8')
@@ -801,6 +1104,50 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
     res.end(code);
     return;
+  }
+
+  // API 6: Pivot Points Quantitative Strategy Backtest
+  if (url === '/api/pivot-backtest') {
+    const reqUrl = new URL(req.url, 'http://localhost');
+    const symbol = reqUrl.searchParams.get('symbol') || '%5ENSEBANK';
+    const interval = reqUrl.searchParams.get('interval') || '15m';
+    const range = reqUrl.searchParams.get('range') || '60d';
+    const slMode = reqUrl.searchParams.get('slMode') || 'P';
+    const targetMode = reqUrl.searchParams.get('targetMode') || 'R2_S2';
+    const maxTrades = parseInt(reqUrl.searchParams.get('maxTrades') || '1', 10);
+    const lots = parseInt(reqUrl.searchParams.get('lots') || '15', 10);
+    const from = reqUrl.searchParams.get('from');
+    const to = reqUrl.searchParams.get('to');
+
+    try {
+      const result = await runPivotBacktest({
+        symbol,
+        interval,
+        range,
+        slMode,
+        targetMode,
+        maxTradesPerDay: maxTrades,
+        lotSize: lots,
+        from,
+        to
+      });
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify(result));
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ success: false, message: err.message }));
+    }
+    return;
+  }
+
+  // Route: Custom Strategy Quantitative Backtest Engine Page
+  if (url === '/backtest' || url === '/backtest.html' || url === '/strategy-backtest') {
+    if (fs.existsSync(backtestHtmlPath)) {
+      const html = fs.readFileSync(backtestHtmlPath, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(html);
+      return;
+    }
   }
 
   // Route: Bank Nifty Dedicated Quant & Options Paper Trading Terminal
