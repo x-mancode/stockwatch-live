@@ -602,6 +602,50 @@
       flex-direction: column;
       gap: 4px;
     }
+    .bt-range-btn {
+      font-size: 11px;
+      padding: 4px 10px;
+      min-height: 28px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #cbd5e1;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+    .bt-range-btn:hover {
+      background: #334155;
+      color: #fff;
+    }
+    .bt-range-btn.active {
+      background: #1e3a8a !important;
+      color: #93c5fd !important;
+      border-color: #3b82f6 !important;
+      font-weight: 700;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+    }
+    .bt-pill-btn {
+      font-size: 11px;
+      padding: 3px 9px;
+      min-height: 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #cbd5e1;
+      transition: all 0.15s ease;
+    }
+    .bt-pill-btn:hover {
+      background: #334155;
+      color: #fff;
+    }
+    .bt-pill-btn.active {
+      background: #2563eb !important;
+      color: #fff !important;
+      border-color: #3b82f6 !important;
+      font-weight: 700;
+    }
 
     /* ===================================================
        TAB 3: PINE SCRIPT & RULES
@@ -858,10 +902,12 @@
 
           <!-- Trade Execution Log -->
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
               <h4 style="font-size: 14px; font-weight: 700; color: #cbd5e1;">📜 Closed Trade History</h4>
               <div class="btn-group" style="display: inline-flex;">
-                <button id="btnFilterTodayTrades" class="btn btn-secondary active" style="font-size: 11px; padding: 3px 9px; min-height: 24px; border-color: #3b82f6; color: #38bdf8;" onclick="setTradeFilter('today')">⚡ Today's Trades Only</button>
+                <button id="btnFilterTodayTrades" class="btn btn-secondary active" style="font-size: 11px; padding: 3px 9px; min-height: 24px; border-color: #3b82f6; color: #38bdf8;" onclick="setTradeFilter('today')">⚡ Today</button>
+                <button id="btnFilter1wTrades" class="btn btn-secondary" style="font-size: 11px; padding: 3px 9px; min-height: 24px;" onclick="setTradeFilter('1w')">1 Week</button>
+                <button id="btnFilter1moTrades" class="btn btn-secondary" style="font-size: 11px; padding: 3px 9px; min-height: 24px;" onclick="setTradeFilter('1mo')">1 Month</button>
                 <button id="btnFilterAllTrades" class="btn btn-secondary" style="font-size: 11px; padding: 3px 9px; min-height: 24px;" onclick="setTradeFilter('all')">All History</button>
               </div>
             </div>
@@ -953,27 +999,140 @@
         </div>
       </div>
 
-      <!-- 4 Key Strategy Performance Highlights -->
+      <!-- ============================================================================== -->
+      <!-- INTERACTIVE BACKTEST & P&L TIME SELECTOR STRIP -->
+      <!-- ============================================================================== -->
+      <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 15px; font-weight: 800; color: #fff;">📊 Strategy Backtest & P&L Engine</span>
+              <span class="badge" id="btActivePeriodBadge" style="background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3);">10 Years (All Time)</span>
+            </div>
+            <div style="font-size: 11px; color: #94a3b8; margin-top: 3px;">
+              Select timeframe to backtrack trades, calculate net P&L (₹), win rate, and verify payoff ratio
+            </div>
+          </div>
+          
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 11px; color: #94a3b8; font-weight: 600;">Position Size:</span>
+              <select id="btLotSelect" onchange="onBacktestLotChange()" style="background: #0f172a; border: 1px solid #334155; color: #fff; border-radius: 6px; padding: 5px 8px; font-size: 12px; font-weight: 700;">
+                <option value="15" selected>1 Lot (15 Qty)</option>
+                <option value="30">2 Lots (30 Qty)</option>
+                <option value="75">5 Lots (75 Qty)</option>
+                <option value="150">10 Lots (150 Qty)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Time Range Buttons -->
+        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 12px; padding-top: 10px; border-top: 1px solid #1e293b;">
+          <span style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-right: 4px;">Timeframe:</span>
+          <button class="bt-range-btn" data-range="1d" onclick="setBacktestRange('1d')">1 Day</button>
+          <button class="bt-range-btn" data-range="1w" onclick="setBacktestRange('1w')">1 Week</button>
+          <button class="bt-range-btn" data-range="1mo" onclick="setBacktestRange('1mo')">1 Month</button>
+          <button class="bt-range-btn" data-range="3mo" onclick="setBacktestRange('3mo')">3 Months</button>
+          <button class="bt-range-btn" data-range="6mo" onclick="setBacktestRange('6mo')">6 Months</button>
+          <button class="bt-range-btn" data-range="1y" onclick="setBacktestRange('1y')">1 Year</button>
+          <button class="bt-range-btn" data-range="3y" onclick="setBacktestRange('3y')">3 Years</button>
+          <button class="bt-range-btn" data-range="5y" onclick="setBacktestRange('5y')">5 Years</button>
+          <button class="bt-range-btn active" data-range="10y" onclick="setBacktestRange('10y')">10 Years (All)</button>
+          <button class="bt-range-btn" data-range="custom" onclick="toggleCustomRangeBox()">📅 Custom Range</button>
+        </div>
+
+        <!-- Custom Date Pickers (Collapsible) -->
+        <div id="btCustomDateBox" style="display: none; align-items: center; gap: 8px; margin-top: 10px; padding: 10px 12px; background: #0b1120; border: 1px dashed #3b82f6; border-radius: 8px; flex-wrap: wrap;">
+          <span style="font-size: 12px; color: #94a3b8; font-weight: 600;">Custom From:</span>
+          <input type="date" id="btCustomFrom" style="background: #1e293b; border: 1px solid #334155; color: #fff; padding: 5px 8px; border-radius: 6px; font-size: 12px;" />
+          <span style="font-size: 12px; color: #94a3b8; font-weight: 600;">To:</span>
+          <input type="date" id="btCustomTo" style="background: #1e293b; border: 1px solid #334155; color: #fff; padding: 5px 8px; border-radius: 6px; font-size: 12px;" />
+          <button class="btn btn-primary" style="font-size: 11px; padding: 6px 14px;" onclick="applyCustomBacktestRange()">⚡ Run Backtest</button>
+          <span style="font-size: 11px; color: #64748b;" id="btCustomRangeHint">Enter start & end date to test any historical period</span>
+        </div>
+      </div>
+
+      <!-- 4 Dynamic KPI Performance Cards -->
       <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px;">
+        <!-- Card 1: Net P&L (₹) -->
+        <div class="kpi-card" style="border-top: 3px solid #22c55e; padding: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Net P&L (₹)</span>
+            <span id="btPointsBadge" class="badge" style="background: rgba(34,197,94,0.15); color: #4ade80; font-size: 10px;">+83,890 pts</span>
+          </div>
+          <span class="num up" id="btNetProfitVal" style="font-size: 22px; font-weight: 800;">+₹12,58,350</span>
+          <span id="btNetProfitSub" style="font-size: 11px; color: var(--text-muted);">Based on 1 Lot (15 Qty)</span>
+        </div>
+
+        <!-- Card 2: Win Rate -->
         <div class="kpi-card" style="border-top: 3px solid #38bdf8; padding: 12px;">
           <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Win Rate</span>
-          <span class="num" style="font-size: 20px; font-weight: 800; color: #38bdf8;">63.5%</span>
-          <span style="font-size: 11px; color: var(--text-muted);">108 Wins / 62 Losses</span>
+          <span class="num" id="btWinRateVal" style="font-size: 22px; font-weight: 800; color: #38bdf8;">60.4%</span>
+          <span id="btWinRateSub" style="font-size: 11px; color: var(--text-muted);">553 Wins / 363 Losses (916 Trades)</span>
         </div>
-        <div class="kpi-card" style="border-top: 3px solid #22c55e; padding: 12px;">
-          <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Profit Factor</span>
-          <span class="num up" style="font-size: 20px; font-weight: 800;">1.73</span>
-          <span style="font-size: 11px; color: var(--text-muted);">Gross 1.73x Losses</span>
-        </div>
+
+        <!-- Card 3: Profit Factor & Payoff -->
         <div class="kpi-card" style="border-top: 3px solid #c084fc; padding: 12px;">
-          <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">10-Yr Net Pts</span>
-          <span class="num" style="font-size: 20px; font-weight: 800; color: #c084fc;">+54,335 pts</span>
-          <span style="font-size: 11px; color: var(--text-muted);">+320 pts / trade</span>
+          <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Profit Factor & Payoff</span>
+          <span class="num up" id="btProfitFactorVal" style="font-size: 22px; font-weight: 800; color: #c084fc;">2.23</span>
+          <span id="btPayoffSub" style="font-size: 11px; color: var(--text-muted);">Payoff: 1.46x &bull; Gross 2.23x Losses</span>
         </div>
+
+        <!-- Card 4: Max Drawdown & Expectancy -->
         <div class="kpi-card" style="border-top: 3px solid #fbbf24; padding: 12px;">
-          <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Est. 1-Lot Return</span>
-          <span class="num" style="font-size: 20px; font-weight: 800; color: #fbbf24;">₹8,15,025</span>
-          <span style="font-size: 11px; color: var(--text-muted);">Max DD: ₹91,455</span>
+          <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Max DD & Expectancy</span>
+          <span class="num down" id="btDrawdownVal" style="font-size: 22px; font-weight: 800;">-2,390 pts</span>
+          <span id="btExpectancySub" style="font-size: 11px; color: var(--text-muted);">Avg Return: +92 pts (+₹1,374) / trade</span>
+        </div>
+      </div>
+
+      <!-- ============================================================================== -->
+      <!-- INTERACTIVE BACKTRACK TRADE LOG -->
+      <!-- ============================================================================== -->
+      <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <h3 style="font-size: 14px; font-weight: 700; color: #fff;" id="btLogTitle">📋 Backtrack Trade Log &bull; 10 Years (916 Trades)</h3>
+            <div style="font-size: 11px; color: #94a3b8;">Detailed execution breakdown of every trigger in this selected timeframe</div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <!-- Filter Pills -->
+            <div class="btn-group" style="display: inline-flex;">
+              <button id="btFilterAll" class="btn btn-secondary bt-pill-btn active" onclick="setBtTradeFilter('all')">All (<span id="btCountAll">0</span>)</button>
+              <button id="btFilterWins" class="btn btn-secondary bt-pill-btn" onclick="setBtTradeFilter('wins')">🟢 Wins (<span id="btCountWins">0</span>)</button>
+              <button id="btFilterLosses" class="btn btn-secondary bt-pill-btn" onclick="setBtTradeFilter('losses')">🔴 Losses (<span id="btCountLosses">0</span>)</button>
+            </div>
+
+            <!-- Quick Search -->
+            <input type="text" id="btSearchInput" placeholder="Filter by date (YYYY-MM)..." oninput="renderBacktestTable()" style="background: #0f172a; border: 1px solid #334155; color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 11px; width: 150px;" />
+
+            <!-- CSV Export -->
+            <button class="btn btn-secondary" style="font-size: 11px; padding: 4px 10px; min-height: 26px;" onclick="exportBacktestCSV()">⬇ Export CSV</button>
+          </div>
+        </div>
+
+        <div class="table-container" style="max-height: 380px;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 45px;">#</th>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Entry (₹)</th>
+                <th>Exit (₹)</th>
+                <th>Exit Reason</th>
+                <th>Points</th>
+                <th>Net P&L (₹)</th>
+                <th>Cumul P&L (₹)</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody id="btTradesTbody">
+              <tr><td colspan="10" style="text-align: center; padding: 24px; color: #94a3b8; font-size: 12px;">Loading historical backtrack trades...</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -1551,25 +1710,26 @@
 
     function setTradeFilter(filter) {
       activeTradeFilter = filter;
-      const btnToday = document.getElementById('btnFilterTodayTrades');
-      const btnAll = document.getElementById('btnFilterAllTrades');
-      if (btnToday && btnAll) {
-        if (filter === 'today') {
-          btnToday.classList.add('active');
-          btnToday.style.borderColor = '#3b82f6';
-          btnToday.style.color = '#38bdf8';
-          btnAll.classList.remove('active');
-          btnAll.style.borderColor = '';
-          btnAll.style.color = '';
-        } else {
-          btnAll.classList.add('active');
-          btnAll.style.borderColor = '#3b82f6';
-          btnAll.style.color = '#38bdf8';
-          btnToday.classList.remove('active');
-          btnToday.style.borderColor = '';
-          btnToday.style.color = '';
+      const btnMap = {
+        'today': document.getElementById('btnFilterTodayTrades'),
+        '1w': document.getElementById('btnFilter1wTrades'),
+        '1mo': document.getElementById('btnFilter1moTrades'),
+        'all': document.getElementById('btnFilterAllTrades')
+      };
+      Object.keys(btnMap).forEach(k => {
+        const btn = btnMap[k];
+        if (btn) {
+          if (k === filter) {
+            btn.classList.add('active');
+            btn.style.borderColor = '#3b82f6';
+            btn.style.color = '#38bdf8';
+          } else {
+            btn.classList.remove('active');
+            btn.style.borderColor = '';
+            btn.style.color = '';
+          }
         }
-      }
+      });
       renderClosedTrades();
     }
 
@@ -1577,15 +1737,21 @@
     function renderClosedTrades() {
       const tbody = document.getElementById('closedPositionsRows');
       if (!tbody) return;
+      const now = Date.now();
       const todayStr = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
-      const listToRender = activeTradeFilter === 'today'
-        ? paperState.closedTrades.filter(t => !t.date || t.date === todayStr)
-        : paperState.closedTrades;
+
+      let listToRender = paperState.closedTrades;
+      if (activeTradeFilter === 'today') {
+        listToRender = paperState.closedTrades.filter(t => !t.date || t.date === todayStr);
+      } else if (activeTradeFilter === '1w') {
+        listToRender = paperState.closedTrades.filter(t => !t.rawTime || (now - t.rawTime <= 7 * 86400000));
+      } else if (activeTradeFilter === '1mo') {
+        listToRender = paperState.closedTrades.filter(t => !t.rawTime || (now - t.rawTime <= 30 * 86400000));
+      }
 
       if (listToRender.length === 0) {
-        const msg = activeTradeFilter === 'today'
-          ? "No closed trades recorded today yet. (Click 'All History' to view earlier trades)"
-          : 'No closed trades recorded yet.';
+        const filterNames = { today: "today", '1w': "in the last 7 days", '1mo': "in the last 30 days", all: "in history" };
+        const msg = `No closed trades recorded ${filterNames[activeTradeFilter] || ''} yet.`;
         tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px; color: #64748b;">${msg}</td></tr>`;
         return;
       }
@@ -1594,7 +1760,7 @@
       listToRender.forEach(t => {
         const plClass = t.netPL >= 0 ? 'up' : 'down';
         const plSign = t.netPL >= 0 ? '+' : '';
-        const dateTag = (activeTradeFilter === 'all' && t.date) ? `<br><span style="font-size:10px;color:#64748b;">${t.date}</span>` : '';
+        const dateTag = t.date ? `<br><span style="font-size:10px;color:#64748b;">${t.date}</span>` : '';
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td style="color: #94a3b8; font-size: 12px;">${t.timestamp}${dateTag}</td>
@@ -1770,12 +1936,368 @@
         // Populate Recent Sessions Table
         renderRecentSessions(data.recentSessions);
 
+        // Update Backtest Engine UI
+        if (data.allTrades && data.allTrades.length) {
+          updateBacktestUI();
+        }
+
         // Feed tick to Paper Trading Engine
         updateLiveOptionPrices(data.live.price, data.live.curATR);
         checkAutoTradeTriggers(data);
       } catch (e) {
         console.error('Error in fetchBankNiftyData:', e);
       }
+    }
+
+    // ==============================================================================
+    // BACKTEST & P&L TRACKING ENGINE (1D, 1W, 1MO, 3MO, 6MO, 1Y, 3Y, 5Y, 10Y, CUSTOM)
+    // ==============================================================================
+    let currentBtRange = '10y';
+    let currentBtLots = 15;
+    let currentBtFilter = 'all'; // 'all', 'wins', 'losses'
+    let currentBtCustomFrom = '';
+    let currentBtCustomTo = '';
+    let currentFilteredTrades = [];
+
+    function setBacktestRange(range) {
+      currentBtRange = range;
+      document.querySelectorAll('.bt-range-btn').forEach(btn => {
+        if (btn.getAttribute('data-range') === range) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+      const customBox = document.getElementById('btCustomDateBox');
+      if (customBox) {
+        if (range === 'custom') {
+          customBox.style.display = 'flex';
+          initCustomDateInputs();
+        } else {
+          customBox.style.display = 'none';
+        }
+      }
+      updateBacktestUI();
+    }
+
+    function toggleCustomRangeBox() {
+      const customBox = document.getElementById('btCustomDateBox');
+      if (!customBox) return;
+      if (customBox.style.display === 'none' || !customBox.style.display) {
+        setBacktestRange('custom');
+      } else {
+        setBacktestRange('10y');
+      }
+    }
+
+    function initCustomDateInputs() {
+      const fromInput = document.getElementById('btCustomFrom');
+      const toInput = document.getElementById('btCustomTo');
+      if (!fromInput || !toInput) return;
+      if (!toInput.value) {
+        toInput.value = new Date().toISOString().split('T')[0];
+      }
+      if (!fromInput.value) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - 1);
+        fromInput.value = d.toISOString().split('T')[0];
+      }
+    }
+
+    function applyCustomBacktestRange() {
+      const fromInput = document.getElementById('btCustomFrom');
+      const toInput = document.getElementById('btCustomTo');
+      if (!fromInput || !toInput) return;
+      currentBtCustomFrom = fromInput.value;
+      currentBtCustomTo = toInput.value;
+      if (!currentBtCustomFrom && !currentBtCustomTo) {
+        showToast('Please select a start or end date', '⚠️');
+        return;
+      }
+      currentBtRange = 'custom';
+      updateBacktestUI();
+      showToast(`Custom Backtest Applied: ${currentBtCustomFrom || 'Start'} to ${currentBtCustomTo || 'Today'}`, '⚡');
+    }
+
+    function onBacktestLotChange() {
+      const sel = document.getElementById('btLotSelect');
+      if (sel) {
+        currentBtLots = parseInt(sel.value, 10) || 15;
+      }
+      updateBacktestUI();
+    }
+
+    function setBtTradeFilter(filter) {
+      currentBtFilter = filter;
+      const bAll = document.getElementById('btFilterAll');
+      const bWins = document.getElementById('btFilterWins');
+      const bLosses = document.getElementById('btFilterLosses');
+      if (bAll) bAll.className = 'btn btn-secondary bt-pill-btn' + (filter === 'all' ? ' active' : '');
+      if (bWins) bWins.className = 'btn btn-secondary bt-pill-btn' + (filter === 'wins' ? ' active' : '');
+      if (bLosses) bLosses.className = 'btn btn-secondary bt-pill-btn' + (filter === 'losses' ? ' active' : '');
+      renderBacktestTable();
+    }
+
+    function filterClientTrades(trades, range, from, to) {
+      if (!trades || !trades.length) return [];
+      const latestDateStr = trades[trades.length - 1].isoDate;
+      const latestDate = new Date(latestDateStr);
+
+      if (range === '1d' || range === 'today') {
+        return trades.filter(t => t.isoDate === latestDateStr);
+      } else if (range === '1w') {
+        const cut = new Date(latestDate.getTime() - 7 * 86400000).toISOString().split('T')[0];
+        return trades.filter(t => t.isoDate >= cut);
+      } else if (range === '1mo') {
+        const cut = new Date(latestDate.getTime() - 30 * 86400000).toISOString().split('T')[0];
+        return trades.filter(t => t.isoDate >= cut);
+      } else if (range === '3mo') {
+        const cut = new Date(latestDate.getTime() - 90 * 86400000).toISOString().split('T')[0];
+        return trades.filter(t => t.isoDate >= cut);
+      } else if (range === '6mo') {
+        const cut = new Date(latestDate.getTime() - 180 * 86400000).toISOString().split('T')[0];
+        return trades.filter(t => t.isoDate >= cut);
+      } else if (range === '1y') {
+        const cut = new Date(latestDate.getTime() - 365 * 86400000).toISOString().split('T')[0];
+        return trades.filter(t => t.isoDate >= cut);
+      } else if (range === '3y') {
+        const cut = new Date(latestDate.getTime() - 3 * 365 * 86400000).toISOString().split('T')[0];
+        return trades.filter(t => t.isoDate >= cut);
+      } else if (range === '5y') {
+        const cut = new Date(latestDate.getTime() - 5 * 365 * 86400000).toISOString().split('T')[0];
+        return trades.filter(t => t.isoDate >= cut);
+      } else if (range === 'custom') {
+        return trades.filter(t => (!from || t.isoDate >= from) && (!to || t.isoDate <= to));
+      }
+      return trades; // 10y or all
+    }
+
+    function computeClientStats(tradeList, lotSize = 15) {
+      if (!tradeList || !tradeList.length) {
+        return {
+          totalTrades: 0,
+          wins: 0,
+          losses: 0,
+          winRate: 0,
+          netPoints: 0,
+          netProfitInr: 0,
+          profitFactor: '0.00',
+          payoffRatio: '0.00',
+          maxDrawdownPts: 0,
+          maxDrawdownInr: 0,
+          avgPoints: 0,
+          avgInr: 0,
+          lotSize
+        };
+      }
+      const wins = tradeList.filter(t => t.win);
+      const losses = tradeList.filter(t => !t.win);
+      const netPoints = tradeList.reduce((acc, t) => acc + t.points, 0);
+      const grossProfit = wins.reduce((acc, t) => acc + t.points, 0);
+      const grossLoss = Math.abs(losses.reduce((acc, t) => acc + t.points, 0));
+      const profitFactor = grossLoss > 0 ? (grossProfit / grossLoss).toFixed(2) : (grossProfit > 0 ? '∞' : '0.00');
+      const avgWin = wins.length ? grossProfit / wins.length : 0;
+      const avgLoss = losses.length ? grossLoss / losses.length : 0;
+      const payoffRatio = avgLoss > 0 ? (avgWin / avgLoss).toFixed(2) : 'N/A';
+
+      let peak = 0;
+      let equity = 0;
+      let maxDD = 0;
+      for (const t of tradeList) {
+        equity += t.points;
+        if (equity > peak) peak = equity;
+        const dd = peak - equity;
+        if (dd > maxDD) maxDD = dd;
+      }
+
+      return {
+        totalTrades: tradeList.length,
+        wins: wins.length,
+        losses: losses.length,
+        winRate: Number(((wins.length / tradeList.length) * 100).toFixed(1)),
+        netPoints,
+        netProfitInr: netPoints * lotSize,
+        profitFactor,
+        payoffRatio,
+        maxDrawdownPts: maxDD,
+        maxDrawdownInr: maxDD * lotSize,
+        avgPoints: Math.round(netPoints / tradeList.length),
+        avgInr: Math.round((netPoints / tradeList.length) * lotSize),
+        lotSize
+      };
+    }
+
+    function updateBacktestUI() {
+      if (!liveBnfData || !liveBnfData.allTrades) return;
+      currentFilteredTrades = filterClientTrades(liveBnfData.allTrades, currentBtRange, currentBtCustomFrom, currentBtCustomTo);
+      const stats = computeClientStats(currentFilteredTrades, currentBtLots);
+
+      // Period Title & Badge
+      const rangeLabels = {
+        '1d': '1 Day (Latest Session)',
+        '1w': '1 Week (Last 7 Days)',
+        '1mo': '1 Month (Last 30 Days)',
+        '3mo': '3 Months (Last 90 Days)',
+        '6mo': '6 Months (Last 180 Days)',
+        '1y': '1 Year (Last 365 Days)',
+        '3y': '3 Years',
+        '5y': '5 Years',
+        '10y': '10 Years (All Time)',
+        'custom': `Custom Range: ${currentBtCustomFrom || 'Start'} to ${currentBtCustomTo || 'Today'}`
+      };
+      const badgeEl = document.getElementById('btActivePeriodBadge');
+      if (badgeEl) badgeEl.innerText = rangeLabels[currentBtRange] || currentBtRange;
+
+      const titleEl = document.getElementById('btLogTitle');
+      if (titleEl) {
+        titleEl.innerHTML = `📋 Backtrack Trade Log &bull; <span style="color:#38bdf8;">${rangeLabels[currentBtRange] || currentBtRange}</span> (${stats.totalTrades} Trades)`;
+      }
+
+      // Card 1: Net P&L (₹)
+      const pnlEl = document.getElementById('btNetProfitVal');
+      const ptsBadge = document.getElementById('btPointsBadge');
+      const pnlSub = document.getElementById('btNetProfitSub');
+      if (pnlEl) {
+        const sign = stats.netProfitInr >= 0 ? '+' : '';
+        const clr = stats.netProfitInr >= 0 ? 'up' : 'down';
+        pnlEl.className = 'num ' + clr;
+        pnlEl.innerText = `${sign}₹${Math.abs(stats.netProfitInr).toLocaleString('en-IN')}`;
+      }
+      if (ptsBadge) {
+        const sign = stats.netPoints >= 0 ? '+' : '';
+        ptsBadge.innerText = `${sign}${stats.netPoints.toLocaleString('en-IN')} pts`;
+        ptsBadge.style.background = stats.netPoints >= 0 ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)';
+        ptsBadge.style.color = stats.netPoints >= 0 ? '#4ade80' : '#f87171';
+      }
+      if (pnlSub) {
+        const lots = currentBtLots / 15;
+        pnlSub.innerText = `Based on ${lots} Lot${lots > 1 ? 's' : ''} (${currentBtLots} Qty)`;
+      }
+
+      // Card 2: Win Rate
+      const wrEl = document.getElementById('btWinRateVal');
+      const wrSub = document.getElementById('btWinRateSub');
+      if (wrEl) wrEl.innerText = `${stats.winRate}%`;
+      if (wrSub) wrSub.innerText = `${stats.wins} Wins / ${stats.losses} Losses (${stats.totalTrades} Trades)`;
+
+      // Card 3: Profit Factor
+      const pfEl = document.getElementById('btProfitFactorVal');
+      const pfSub = document.getElementById('btPayoffSub');
+      if (pfEl) {
+        pfEl.innerText = stats.profitFactor;
+        pfEl.className = Number(stats.profitFactor) >= 1.5 ? 'num up' : (Number(stats.profitFactor) >= 1 ? 'num' : 'num down');
+      }
+      if (pfSub) pfSub.innerText = `Payoff: ${stats.payoffRatio}x &bull; Gross ${stats.profitFactor}x Losses`;
+
+      // Card 4: Max Drawdown & Expectancy
+      const ddEl = document.getElementById('btDrawdownVal');
+      const expSub = document.getElementById('btExpectancySub');
+      if (ddEl) {
+        ddEl.innerText = `-${stats.maxDrawdownPts.toLocaleString('en-IN')} pts (-₹${stats.maxDrawdownInr.toLocaleString('en-IN')})`;
+      }
+      if (expSub) {
+        const expSign = stats.avgPoints >= 0 ? '+' : '';
+        expSub.innerText = `Avg Return: ${expSign}${stats.avgPoints} pts (${expSign}₹${stats.avgInr.toLocaleString('en-IN')}) / trade`;
+      }
+
+      // Pill Counts
+      const cntAll = document.getElementById('btCountAll');
+      const cntWins = document.getElementById('btCountWins');
+      const cntLosses = document.getElementById('btCountLosses');
+      if (cntAll) cntAll.innerText = stats.totalTrades;
+      if (cntWins) cntWins.innerText = stats.wins;
+      if (cntLosses) cntLosses.innerText = stats.losses;
+
+      renderBacktestTable();
+    }
+
+    function renderBacktestTable() {
+      const tbody = document.getElementById('btTradesTbody');
+      if (!tbody) return;
+      if (!currentFilteredTrades || !currentFilteredTrades.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="10" style="text-align: center; padding: 32px 18px; color: #94a3b8; font-size: 13px;">
+              ⚪ <b>0 trades triggered in this timeframe</b> (${currentBtRange.toUpperCase()})<br>
+              <span style="font-size: 11px; color: #64748b; margin-top: 4px; display: inline-block;">
+                Bank Nifty traded inside normal range without meeting squeeze breakout criteria. Capital was safely preserved!
+              </span>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      const searchInput = document.getElementById('btSearchInput');
+      const searchVal = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+      let list = currentFilteredTrades;
+      if (currentBtFilter === 'wins') list = list.filter(t => t.win);
+      else if (currentBtFilter === 'losses') list = list.filter(t => !t.win);
+
+      if (searchVal) {
+        list = list.filter(t => (t.isoDate && t.isoDate.toLowerCase().includes(searchVal)) || (t.date && t.date.toLowerCase().includes(searchVal)) || t.type.toLowerCase().includes(searchVal));
+      }
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 24px; color: #64748b; font-size: 12px;">No matching trades found for filter '${currentBtFilter}'.</td></tr>`;
+        return;
+      }
+
+      // Calculate running cumulative P&L
+      let runningPL = 0;
+      const rowsHtml = list.map((t, idx) => {
+        const tradePL = t.points * currentBtLots;
+        runningPL += tradePL;
+        const plClass = tradePL >= 0 ? 'up' : 'down';
+        const plSign = tradePL >= 0 ? '+' : '';
+        const runClass = runningPL >= 0 ? 'up' : 'down';
+        const runSign = runningPL >= 0 ? '+' : '';
+        const isCall = t.type.includes('CALL');
+        const badgeColor = isCall ? '#22c55e' : '#ef4444';
+        const badgeBg = isCall ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)';
+        const outcomeBadge = t.win 
+          ? '<span class="badge" style="background:rgba(34,197,94,0.2);color:#4ade80;border:1px solid rgba(34,197,94,0.4);">WIN</span>'
+          : '<span class="badge" style="background:rgba(239,68,68,0.2);color:#f87171;border:1px solid rgba(239,68,68,0.4);">LOSS</span>';
+
+        return `
+          <tr>
+            <td style="color:#64748b;font-size:11px;">#${t.id || (idx + 1)}</td>
+            <td><b>${t.isoDate || t.date}</b></td>
+            <td><span class="badge" style="background:${badgeBg};color:${badgeColor};font-weight:700;">${t.type}</span></td>
+            <td class="num">₹${t.entry.toLocaleString('en-IN')}</td>
+            <td class="num">₹${t.exit.toLocaleString('en-IN')}</td>
+            <td style="font-size:11px;color:#cbd5e1;">${t.exitType}</td>
+            <td class="num ${plClass}"><b>${plSign}${t.points.toLocaleString('en-IN')} pts</b></td>
+            <td class="num ${plClass}" style="font-weight:800;">${plSign}₹${tradePL.toLocaleString('en-IN')}</td>
+            <td class="num ${runClass}" style="font-weight:700;">${runSign}₹${runningPL.toLocaleString('en-IN')}</td>
+            <td>${outcomeBadge}</td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.innerHTML = rowsHtml;
+    }
+
+    function exportBacktestCSV() {
+      if (!currentFilteredTrades || !currentFilteredTrades.length) {
+        showToast('No trades to export', '⚠️');
+        return;
+      }
+      let csv = 'Trade_ID,Date,Type,Entry,Exit,Exit_Reason,Points,Lot_Size,Net_PL_INR,Result\n';
+      currentFilteredTrades.forEach((t, i) => {
+        const pl = t.points * currentBtLots;
+        csv += `${t.id || (i+1)},${t.isoDate || t.date},"${t.type}",${t.entry},${t.exit},"${t.exitType}",${t.points},${currentBtLots},${pl},${t.win ? 'WIN' : 'LOSS'}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `banknifty_backtrack_${currentBtRange}_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast('Backtrack CSV Downloaded!', '📥');
     }
 
     async function loadPineScript() {

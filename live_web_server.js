@@ -240,14 +240,113 @@ async function fetchLiveStock(rawSymbol) {
 }
 
 // ==============================================================================
-// BANK NIFTY QUANT STRATEGY DATA ANALYZER
+// BANK NIFTY QUANT STRATEGY DATA ANALYZER & BACKTRACK ENGINE
 // ==============================================================================
+let cachedBnfData = null;
+let lastBnfFetchTime = 0;
+
+function computeTradeStats(tradeList, lotSize = 15) {
+  if (!tradeList || !tradeList.length) {
+    return {
+      totalTrades: 0,
+      wins: 0,
+      losses: 0,
+      winRate: 0,
+      netPoints: 0,
+      netProfitInr: 0,
+      profitFactor: 0,
+      payoffRatio: 0,
+      maxDrawdownPts: 0,
+      maxDrawdownInr: 0,
+      avgPoints: 0,
+      avgInr: 0,
+      lotSize
+    };
+  }
+  const wins = tradeList.filter(t => t.win);
+  const losses = tradeList.filter(t => !t.win);
+  const netPoints = tradeList.reduce((acc, t) => acc + t.points, 0);
+  const grossProfit = wins.reduce((acc, t) => acc + t.points, 0);
+  const grossLoss = Math.abs(losses.reduce((acc, t) => acc + t.points, 0));
+  const profitFactor = grossLoss > 0 ? (grossProfit / grossLoss).toFixed(2) : (grossProfit > 0 ? '∞' : '0.00');
+  const avgWin = wins.length ? grossProfit / wins.length : 0;
+  const avgLoss = losses.length ? grossLoss / losses.length : 0;
+  const payoffRatio = avgLoss > 0 ? (avgWin / avgLoss).toFixed(2) : 'N/A';
+
+  let peak = 0;
+  let equity = 0;
+  let maxDD = 0;
+  for (const t of tradeList) {
+    equity += t.points;
+    if (equity > peak) peak = equity;
+    const dd = peak - equity;
+    if (dd > maxDD) maxDD = dd;
+  }
+
+  return {
+    totalTrades: tradeList.length,
+    wins: wins.length,
+    losses: losses.length,
+    winRate: Number(((wins.length / tradeList.length) * 100).toFixed(1)),
+    netPoints,
+    netProfitInr: netPoints * lotSize,
+    profitFactor,
+    payoffRatio,
+    maxDrawdownPts: maxDD,
+    maxDrawdownInr: maxDD * lotSize,
+    avgPoints: Math.round(netPoints / tradeList.length),
+    avgInr: Math.round((netPoints / tradeList.length) * lotSize),
+    lotSize
+  };
+}
+
+function filterTradesByRange(trades, period, fromDate, toDate) {
+  if (!trades || !trades.length) return [];
+  const latestDateStr = trades[trades.length - 1].isoDate;
+  const latestDate = new Date(latestDateStr);
+
+  if (period === '1d' || period === 'today') {
+    return trades.filter(t => t.isoDate === latestDateStr);
+  } else if (period === '1w') {
+    const cut = new Date(latestDate.getTime() - 7 * 86400000).toISOString().split('T')[0];
+    return trades.filter(t => t.isoDate >= cut);
+  } else if (period === '1mo') {
+    const cut = new Date(latestDate.getTime() - 30 * 86400000).toISOString().split('T')[0];
+    return trades.filter(t => t.isoDate >= cut);
+  } else if (period === '3mo') {
+    const cut = new Date(latestDate.getTime() - 90 * 86400000).toISOString().split('T')[0];
+    return trades.filter(t => t.isoDate >= cut);
+  } else if (period === '6mo') {
+    const cut = new Date(latestDate.getTime() - 180 * 86400000).toISOString().split('T')[0];
+    return trades.filter(t => t.isoDate >= cut);
+  } else if (period === '1y') {
+    const cut = new Date(latestDate.getTime() - 365 * 86400000).toISOString().split('T')[0];
+    return trades.filter(t => t.isoDate >= cut);
+  } else if (period === '3y') {
+    const cut = new Date(latestDate.getTime() - 3 * 365 * 86400000).toISOString().split('T')[0];
+    return trades.filter(t => t.isoDate >= cut);
+  } else if (period === '5y') {
+    const cut = new Date(latestDate.getTime() - 5 * 365 * 86400000).toISOString().split('T')[0];
+    return trades.filter(t => t.isoDate >= cut);
+  } else if (period === 'custom') {
+    return trades.filter(t => (!fromDate || t.isoDate >= fromDate) && (!toDate || t.isoDate <= toDate));
+  }
+  return trades; // 10y or all
+}
+
 async function getBankNiftyStrategyData() {
   try {
-    const url = 'https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEBANK?range=1y&interval=1d';
+    if (cachedBnfData && (Date.now() - lastBnfFetchTime < 30000)) {
+      return cachedBnfData;
+    }
+
+    const url = 'https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEBANK?range=10y&interval=1d';
     const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
     const data = await res.json();
-    if (!data.chart || !data.chart.result || data.chart.result.length === 0) return null;
+    if (!data.chart || !data.chart.result || data.chart.result.length === 0) {
+      if (cachedBnfData) return cachedBnfData;
+      return null;
+    }
     const meta = data.chart.result[0].meta;
     const quote = data.chart.result[0].indicators.quote[0];
     const timestamps = data.chart.result[0].timestamp;
@@ -256,6 +355,7 @@ async function getBankNiftyStrategyData() {
       if (quote.close[i] != null && quote.high[i] != null && quote.low[i] != null && quote.open[i] != null) {
         const d = new Date(timestamps[i] * 1000);
         valid.push({
+          isoDate: d.toISOString().split('T')[0],
           date: d.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
           open: quote.open[i],
           high: quote.high[i],
@@ -328,9 +428,91 @@ async function getBankNiftyStrategyData() {
     const target2Dist = 3.0 * yATR;
     const atmStrike = Math.round(livePrice / 100) * 100;
 
-    // Recent 15 sessions log
+    // Complete 10-Year Backtrack Trade Simulation
+    const allTrades = [];
+    for (let i = 15; i < valid.length; i++) {
+      const prev = valid[i - 1];
+      const pprev = valid[i - 2];
+      const cur = valid[i];
+      const pRange = prev.high - prev.low;
+      const ppRange = pprev.high - pprev.low;
+      const pATR = atr[i - 1];
+      const isSqueeze = (pRange < 0.85 * pATR) && (pRange < ppRange);
+      if (!isSqueeze) continue;
+
+      const longTrig = prev.high;
+      const shortTrig = prev.low;
+      const targetDist = 2.0 * pATR;
+      const slDist = 2.0 * pATR;
+
+      if (cur.high > longTrig) {
+        const entry = longTrig;
+        const target = entry + targetDist;
+        const sl = entry - slDist;
+        let exitPrice = cur.close;
+        let exitType = 'EOD Exit (3:15 PM)';
+        let pts = cur.close - entry;
+        if (cur.high >= target) {
+          exitPrice = target;
+          exitType = 'Target 1 Hit (+2x ATR)';
+          pts = targetDist;
+        } else if (cur.low <= sl) {
+          exitPrice = sl;
+          exitType = 'Stop-Loss Hit (-2x ATR)';
+          pts = -slDist;
+        }
+        allTrades.push({
+          id: allTrades.length + 1,
+          isoDate: cur.isoDate,
+          date: cur.date,
+          type: 'BUY CALL (CE)',
+          direction: 'BUY',
+          entry: Math.round(entry),
+          target: Math.round(target),
+          sl: Math.round(sl),
+          exit: Math.round(exitPrice),
+          exitType,
+          points: Math.round(pts),
+          win: pts > 0,
+          atr: Math.round(pATR)
+        });
+      } else if (cur.low < shortTrig) {
+        const entry = shortTrig;
+        const target = entry - targetDist;
+        const sl = entry + slDist;
+        let exitPrice = cur.close;
+        let exitType = 'EOD Exit (3:15 PM)';
+        let pts = entry - cur.close;
+        if (cur.low <= target) {
+          exitPrice = target;
+          exitType = 'Target 1 Hit (+2x ATR)';
+          pts = targetDist;
+        } else if (cur.high >= sl) {
+          exitPrice = sl;
+          exitType = 'Stop-Loss Hit (-2x ATR)';
+          pts = -slDist;
+        }
+        allTrades.push({
+          id: allTrades.length + 1,
+          isoDate: cur.isoDate,
+          date: cur.date,
+          type: 'BUY PUT (PE)',
+          direction: 'SELL',
+          entry: Math.round(entry),
+          target: Math.round(target),
+          sl: Math.round(sl),
+          exit: Math.round(exitPrice),
+          exitType,
+          points: Math.round(pts),
+          win: pts > 0,
+          atr: Math.round(pATR)
+        });
+      }
+    }
+
+    // Recent 20 sessions log
     const recentSessions = [];
-    for (let i = valid.length - 1; i >= Math.max(15, valid.length - 15); i--) {
+    for (let i = valid.length - 1; i >= Math.max(15, valid.length - 20); i--) {
       const b = valid[i];
       const p = valid[i - 1];
       const pp = valid[i - 2];
@@ -360,6 +542,7 @@ async function getBankNiftyStrategyData() {
       }
       recentSessions.push({
         date: b.date,
+        isoDate: b.isoDate,
         open: Math.round(b.open),
         high: Math.round(b.high),
         low: Math.round(b.low),
@@ -372,7 +555,20 @@ async function getBankNiftyStrategyData() {
       });
     }
 
-    return {
+    // Precomputed stats for quick access
+    const precomputedStats = {
+      '1d': computeTradeStats(filterTradesByRange(allTrades, '1d'), 15),
+      '1w': computeTradeStats(filterTradesByRange(allTrades, '1w'), 15),
+      '1mo': computeTradeStats(filterTradesByRange(allTrades, '1mo'), 15),
+      '3mo': computeTradeStats(filterTradesByRange(allTrades, '3mo'), 15),
+      '6mo': computeTradeStats(filterTradesByRange(allTrades, '6mo'), 15),
+      '1y': computeTradeStats(filterTradesByRange(allTrades, '1y'), 15),
+      '3y': computeTradeStats(filterTradesByRange(allTrades, '3y'), 15),
+      '5y': computeTradeStats(filterTradesByRange(allTrades, '5y'), 15),
+      '10y': computeTradeStats(allTrades, 15)
+    };
+
+    const result = {
       live: {
         price: Math.round(livePrice * 100) / 100,
         changePts: Math.round(changePts * 100) / 100,
@@ -406,30 +602,18 @@ async function getBankNiftyStrategyData() {
         atmCE: `${atmStrike} CE`,
         atmPE: `${atmStrike} PE`
       },
-      backtest: {
-        period: "10 Years (2016 - 2026)",
-        candlesTested: 2467,
-        totalTrades: 170,
-        tradesPerYear: 17,
-        wins: 108,
-        losses: 62,
-        winRate: 63.5,
-        profitFactor: 1.73,
-        payoffRatio: 0.99,
-        netPoints: 54335,
-        grossProfitPoints: 128606,
-        grossLossPoints: 74271,
-        maxDrawdownPoints: 6097,
-        expectancyPerTrade: 320,
-        inrProfit1Lot: 815025,
-        inrProfit2Lots: 1630050,
-        inrProfit5Lots: 4075125,
-        maxDDRupees1Lot: 91455
-      },
-      recentSessions
+      precomputedStats,
+      backtest: precomputedStats['10y'],
+      recentSessions,
+      allTrades
     };
+
+    cachedBnfData = result;
+    lastBnfFetchTime = Date.now();
+    return result;
   } catch (err) {
     console.error('Error in getBankNiftyStrategyData:', err);
+    if (cachedBnfData) return cachedBnfData;
     return null;
   }
 }
@@ -581,11 +765,30 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // API 4: Bank Nifty Quant Strategy
-  if (url === '/api/banknifty-strategy') {
+  // API 4: Bank Nifty Quant Strategy & Backtest
+  if (url === '/api/banknifty-strategy' || url === '/api/banknifty-backtest') {
+    const reqUrl = new URL(req.url, 'http://localhost');
+    const period = reqUrl.searchParams.get('period');
+    const from = reqUrl.searchParams.get('from');
+    const to = reqUrl.searchParams.get('to');
+    const lots = parseInt(reqUrl.searchParams.get('lots') || '15', 10);
     const bnfData = await getBankNiftyStrategyData();
+    if (!bnfData) {
+      res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ success: false, message: 'Failed to load Bank Nifty data' }));
+      return;
+    }
+
+    if (period || from || to) {
+      const filtered = filterTradesByRange(bnfData.allTrades, period, from, to);
+      const stats = computeTradeStats(filtered, lots);
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ ...bnfData, filteredTrades: filtered, stats }));
+      return;
+    }
+
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
-    res.end(JSON.stringify(bnfData || { success: false }));
+    res.end(JSON.stringify(bnfData));
     return;
   }
 
