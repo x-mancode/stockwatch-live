@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-  <title>StockWatch Live & Bank Nifty Quant Terminal</title>
+  <title>StockWatch Live Real-Time Terminal</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23131b2e'/%3E%3Cpath d='M12 44 L24 32 L34 40 L52 18' stroke='%2322c55e' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Cpath d='M42 18 H52 V28' stroke='%2322c55e' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
   <link rel="alternate icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
   <style>
@@ -22,7 +22,6 @@
       --red-border: rgba(239, 68, 68, 0.35);
       --red-text: #f87171;
       --blue-btn: #2563eb;
-      --gold-text: #fbbf24;
     }
 
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; }
@@ -134,58 +133,28 @@
     .stat-pill.bear { color: #f87171; }
     .stat-pill.neutral { color: #94a3b8; }
 
-    /* ===================================================
-       MAIN NAVIGATION TABS (Screener vs Bank Nifty)
-       =================================================== */
-    .main-nav-tabs {
-      display: flex;
-      gap: 8px;
-      background: var(--bg-card);
-      padding: 6px;
-      border-radius: 12px;
-      border: 1px solid var(--border-color);
-      margin-bottom: 12px;
-    }
-    .main-tab-btn {
-      flex: 1;
-      background: transparent;
-      border: 1px solid transparent;
-      color: var(--text-muted);
-      padding: 11px 18px;
+    /* Nav Link to New Bank Nifty Terminal */
+    .bn-nav-btn {
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+      color: #fff;
+      text-decoration: none;
+      padding: 6px 14px;
       border-radius: 8px;
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 700;
-      cursor: pointer;
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      gap: 8px;
+      gap: 6px;
+      border: 1px solid rgba(59, 130, 246, 0.5);
       transition: all 0.2s ease;
     }
-    .main-tab-btn:hover {
-      background: rgba(255, 255, 255, 0.04);
-      color: #fff;
-    }
-    .main-tab-btn.active {
-      background: #1e293b;
-      color: #38bdf8;
-      border-color: #334155;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
-    }
-    .tab-badge {
-      background: rgba(34, 197, 94, 0.2);
-      color: #4ade80;
-      border: 1px solid rgba(34, 197, 94, 0.4);
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.3px;
+    .bn-nav-btn:hover {
+      background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
     }
 
-    /* ===================================================
-       LIVE SCROLLING TICKER TAPE
-       =================================================== */
+    /* Live Scrolling Ticker Tape */
     .ticker-wrapper {
       background: #0f172a;
       border: 1px solid var(--border-color);
@@ -350,14 +319,12 @@
     }
     .del-btn:hover { color: #ef4444; background: rgba(239, 68, 68, 0.12); }
 
-    /* ===================================================
-       TAB 1: SCREENER VIEWS (Cards & Table)
-       =================================================== */
+    /* Cards Grid View */
     .cards-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 14px;
-      max-height: calc(100vh - 230px);
+      max-height: calc(100vh - 215px);
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       padding-right: 6px;
@@ -480,11 +447,12 @@
       margin-top: 2px;
     }
 
+    /* Table View */
     .table-container {
       background: var(--bg-card);
       border-radius: 12px;
       border: 1px solid var(--border-color);
-      max-height: calc(100vh - 230px);
+      max-height: calc(100vh - 215px);
       overflow-y: auto;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
@@ -521,212 +489,6 @@
     }
     tbody tr:hover {
       background: #19243c;
-    }
-
-    /* ===================================================
-       TAB 2: BANK NIFTY DEDICATED QUANT STRATEGY STYLES
-       =================================================== */
-    .bnf-hero-card {
-      background: linear-gradient(135deg, #0d1527 0%, #131b2e 100%);
-      border: 1px solid #1e293b;
-      border-radius: 14px;
-      padding: 20px;
-      margin-bottom: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .bnf-hero-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 14px;
-    }
-    .bnf-title-group {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .bnf-symbol-tag {
-      font-size: 22px;
-      font-weight: 800;
-      color: #fff;
-      letter-spacing: -0.3px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .bnf-price-huge {
-      font-size: 26px;
-      font-weight: 800;
-      font-variant-numeric: tabular-nums;
-    }
-    .bnf-chg-huge {
-      font-size: 14px;
-      font-weight: 700;
-      margin-left: 6px;
-    }
-    .bnf-metrics-row {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
-      font-size: 13px;
-      color: var(--text-muted);
-      border-top: 1px solid rgba(255,255,255,0.06);
-      padding-top: 12px;
-    }
-    .bnf-signal-banner {
-      padding: 14px 18px;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .bnf-signal-buy {
-      background: rgba(34, 197, 94, 0.15);
-      border: 1px solid rgba(34, 197, 94, 0.4);
-      color: #4ade80;
-    }
-    .bnf-signal-sell {
-      background: rgba(239, 68, 68, 0.15);
-      border: 1px solid rgba(239, 68, 68, 0.4);
-      color: #f87171;
-    }
-    .bnf-signal-squeeze {
-      background: rgba(245, 158, 11, 0.15);
-      border: 1px solid rgba(245, 158, 11, 0.4);
-      color: #fbbf24;
-    }
-    .bnf-signal-wait {
-      background: rgba(148, 163, 184, 0.1);
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      color: #94a3b8;
-    }
-
-    /* Execution Blueprint Grid */
-    .blueprint-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-    .blueprint-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .blueprint-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .blueprint-val {
-      font-size: 20px;
-      font-weight: 800;
-      color: #fff;
-    }
-    .blueprint-sub {
-      font-size: 12px;
-      color: var(--text-muted);
-      line-height: 1.4;
-    }
-
-    /* 10-Yr Backtest KPI Grid */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-    .kpi-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      transition: transform 0.15s;
-    }
-    .kpi-card:hover { transform: translateY(-2px); border-color: #334155; }
-    .kpi-label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.5px; }
-    .kpi-val { font-size: 20px; font-weight: 800; color: #fff; }
-    .kpi-sub { font-size: 11px; color: var(--text-muted); }
-
-    /* Interactive Calculator */
-    .calc-box {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 18px;
-      margin-bottom: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .calc-controls {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .calc-select {
-      background: var(--bg-input);
-      border: 1px solid var(--border-light);
-      color: #fff;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      outline: none;
-    }
-    .calc-output-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 10px;
-      background: #0b0f19;
-      padding: 14px;
-      border-radius: 10px;
-      border: 1px solid var(--border-color);
-    }
-
-    /* Pine Script Code Viewer */
-    .pine-container {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 18px;
-      margin-bottom: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .code-box {
-      background: #090d16;
-      border: 1px solid #1e293b;
-      border-radius: 10px;
-      padding: 14px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 12px;
-      color: #cbd5e1;
-      max-height: 380px;
-      overflow-y: auto;
-      white-space: pre;
-      line-height: 1.5;
     }
 
     /* Help & Calculation Modal */
@@ -832,7 +594,6 @@
       .btn-group .btn { flex: 1; }
       .cards-grid { grid-template-columns: 1fr; max-height: calc(100vh - 250px); }
       .table-container { max-height: calc(100vh - 250px); }
-      .main-tab-btn { font-size: 12px; padding: 9px 12px; }
       .calc-grid { grid-template-columns: 1fr; }
     }
   </style>
@@ -842,7 +603,7 @@
     <!-- Top Bar -->
     <div class="top-bar">
       <div class="brand-group">
-        <h1 class="brand-title">📈 StockWatch & Bank Nifty Terminal</h1>
+        <h1 class="brand-title">📈 StockWatch Terminal</h1>
         <div id="marketBadge" class="market-badge market-closed">
           <div class="status-dot"></div>
           <span id="marketBadgeText">CHECKING MARKET...</span>
@@ -856,315 +617,64 @@
         <span id="marketDetailText" style="color: #94a3b8; font-size: 12px;">Market Closed</span>
         <span style="color: #64748b;">|</span>
         <span>IST: <b id="updateTime" style="color: #f1f5f9;">Loading...</b></span>
+        <span style="color: #64748b;">|</span>
+        <a href="/banknifty" class="bn-nav-btn">⚡ Bank Nifty Quant & Paper Trading →</a>
       </div>
     </div>
 
-    <!-- MAIN NAVIGATION TABS -->
-    <div class="main-nav-tabs">
-      <button class="main-tab-btn active" id="tabBtnScreener" onclick="switchMainTab('screener')">
-        <span>📊</span> NSE Stocks Screener & Scanner
-      </button>
-      <button class="main-tab-btn" id="tabBtnBankNifty" onclick="switchMainTab('banknifty')">
-        <span>⚡</span> Bank Nifty Quant Strategy <span class="tab-badge">PF 1.73</span>
-      </button>
-    </div>
-
-    <!-- ============================================================================== -->
-    <!-- TAB 1: SCREENER VIEW (PRESERVED ORIGINAL DASHBOARD) -->
-    <!-- ============================================================================== -->
-    <div id="screenerView">
-      <!-- Live Scrolling Ticker Tape -->
-      <div class="ticker-wrapper">
-        <div class="ticker-label" id="tickerLabel">⚡ LIVE TICKER</div>
-        <div class="ticker-scroll-area">
-          <div class="ticker-track" id="tickerTrack">
-            <span style="color: #94a3b8; font-size: 12px;">Loading live market prices...</span>
-          </div>
+    <!-- Live Scrolling Ticker Tape -->
+    <div class="ticker-wrapper">
+      <div class="ticker-label" id="tickerLabel">⚡ LIVE TICKER</div>
+      <div class="ticker-scroll-area">
+        <div class="ticker-track" id="tickerTrack">
+          <span style="color: #94a3b8; font-size: 12px;">Loading live market prices...</span>
         </div>
-      </div>
-
-      <!-- Alert Box -->
-      <div id="warningBox">
-        <span>⚠️</span> <span id="warningMsg">Invalid stock symbol!</span>
-      </div>
-
-      <!-- Controls -->
-      <div class="controls">
-        <form class="add-form" onsubmit="addStock(event)">
-          <input type="text" id="symInput" class="input-box" placeholder="Add NSE Symbol (e.g. TATASTEEL, ZOMATO)" autocomplete="off" />
-          <button type="submit" class="btn">+ Add</button>
-        </form>
-        <div class="btn-group">
-          <button id="viewToggleBtn" onclick="toggleViewMode()" class="btn btn-secondary">📱 Cards View</button>
-          <button onclick="openHelpModal()" class="btn btn-secondary">💡 How It Calculates</button>
-          <button onclick="fetchData()" class="btn btn-secondary">🔄 Refresh</button>
-        </div>
-      </div>
-
-      <!-- View Container: Cards (Scrollable) -->
-      <div id="cardsView" class="cards-grid" style="display: none;"></div>
-
-      <!-- View Container: Table (Scrollable with Sticky Header) -->
-      <div id="tableView" class="table-container" style="display: none;">
-        <table>
-          <thead>
-            <tr>
-              <th>Symbol</th>
-              <th>Live Price (₹)</th>
-              <th>1D Change</th>
-              <th>Futures Action</th>
-              <th>Score</th>
-              <th>Stop-Loss (₹)</th>
-              <th>Target 1 (1:1)</th>
-              <th>Target 2 (1:2)</th>
-              <th>Regime</th>
-              <th>Rationale</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="stockRows">
-            <tr><td colspan="11" style="text-align: center; padding: 40px; color: #94a3b8;">Connecting to live NSE feed...</td></tr>
-          </tbody>
-        </table>
       </div>
     </div>
 
-    <!-- ============================================================================== -->
-    <!-- TAB 2: BANK NIFTY DEDICATED QUANT STRATEGY VIEW -->
-    <!-- ============================================================================== -->
-    <div id="bankniftyView" style="display: none;">
-      <!-- Hero Live Ribbon -->
-      <div class="bnf-hero-card">
-        <div class="bnf-hero-top">
-          <div class="bnf-title-group">
-            <span class="bnf-symbol-tag">🏦 BANK NIFTY (^NSEBANK)</span>
-            <span class="badge badge-hold" id="bnfRegimeBadge">INDEX SPOT</span>
-          </div>
-          <div>
-            <span class="bnf-price-huge num" id="bnfLivePrice">₹55,141.10</span>
-            <span class="bnf-chg-huge num up" id="bnfLiveChange">+626.05 (+1.15%)</span>
-          </div>
-        </div>
+    <!-- Alert Box -->
+    <div id="warningBox">
+      <span>⚠️</span> <span id="warningMsg">Invalid stock symbol!</span>
+    </div>
 
-        <!-- Live Signal Banner -->
-        <div class="bnf-signal-banner bnf-signal-wait" id="bnfSignalBanner">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 20px;">⚡</span>
-            <div>
-              <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.85;">Current Quant Setup State</div>
-              <div style="font-size: 16px; font-weight: 800;" id="bnfSignalText">WAITING FOR SQUEEZE COMPRESSION</div>
-            </div>
-          </div>
-          <div style="font-size: 12px; font-weight: 600;" id="bnfSignalSubText">Requires Daily Range &lt; 0.85× ATR14 before trigger</div>
-        </div>
-
-        <div class="bnf-metrics-row">
-          <span>Today High: <b class="num" id="bnfTodayHigh">55,247.00</b></span>
-          <span>Today Low: <b class="num" id="bnfTodayLow">54,617.20</b></span>
-          <span>14-Day ATR: <b class="num" id="bnfTodayATR">680 pts</b></span>
-          <span>Today Range: <b class="num" id="bnfTodayRange">630 pts</b></span>
-          <span>Compression Ratio: <b class="num" id="bnfCompressionRatio">0.93x ATR</b></span>
-        </div>
+    <!-- Controls -->
+    <div class="controls">
+      <form class="add-form" onsubmit="addStock(event)">
+        <input type="text" id="symInput" class="input-box" placeholder="Add NSE Symbol (e.g. TATASTEEL, ZOMATO)" autocomplete="off" />
+        <button type="submit" class="btn">+ Add</button>
+      </form>
+      <div class="btn-group">
+        <button id="viewToggleBtn" onclick="toggleViewMode()" class="btn btn-secondary">📱 Cards View</button>
+        <button onclick="openHelpModal()" class="btn btn-secondary">💡 How It Calculates</button>
+        <button onclick="fetchData()" class="btn btn-secondary">🔄 Refresh</button>
       </div>
+    </div>
 
-      <!-- Actionable Execution Blueprint (4 Boxes) -->
-      <div class="blueprint-grid">
-        <!-- Long Setup -->
-        <div class="blueprint-card" style="border-left: 3px solid #22c55e;">
-          <div class="blueprint-header">
-            <span style="color: #4ade80;">🟢 BUY TRIGGER (Bull Breakout)</span>
-            <span class="num" style="font-size: 11px; color: #94a3b8;">1:1 to 1.5:1 R:R</span>
-          </div>
-          <div class="blueprint-val num" id="bnfLongTrigger">Above ₹55,247</div>
-          <div class="blueprint-sub">
-            • <b>Stop-Loss (2.0x ATR):</b> <span class="num down" id="bnfLongSL">₹53,887</span><br>
-            • <b>Target 1 (2.0x ATR):</b> <span class="num up" id="bnfLongTP1">₹56,607</span><br>
-            • <b>Target 2 (3.0x ATR):</b> <span class="num up" id="bnfLongTP2">₹57,287</span>
-          </div>
-        </div>
+    <!-- View Container: Cards (Scrollable) -->
+    <div id="cardsView" class="cards-grid" style="display: none;"></div>
 
-        <!-- Short Setup -->
-        <div class="blueprint-card" style="border-left: 3px solid #ef4444;">
-          <div class="blueprint-header">
-            <span style="color: #f87171;">🔴 SHORT TRIGGER (Bear Breakdown)</span>
-            <span class="num" style="font-size: 11px; color: #94a3b8;">1:1 to 1.5:1 R:R</span>
-          </div>
-          <div class="blueprint-val num" id="bnfShortTrigger">Below ₹54,617</div>
-          <div class="blueprint-sub">
-            • <b>Stop-Loss (2.0x ATR):</b> <span class="num down" id="bnfShortSL">₹55,977</span><br>
-            • <b>Target 1 (2.0x ATR):</b> <span class="num up" id="bnfShortTP1">₹53,257</span><br>
-            • <b>Target 2 (3.0x ATR):</b> <span class="num up" id="bnfShortTP2">₹52,577</span>
-          </div>
-        </div>
-
-        <!-- Options Recommendations -->
-        <div class="blueprint-card" style="border-left: 3px solid #fbbf24;">
-          <div class="blueprint-header">
-            <span style="color: #fbbf24;">🎯 OPTIONS STRIKE SELECTION</span>
-            <span style="font-size: 11px; color: #94a3b8;">Current Expiry</span>
-          </div>
-          <div class="blueprint-val num" id="bnfATMStrikes">55,100 ATM</div>
-          <div class="blueprint-sub">
-            • <b>Bullish Breakout:</b> Buy <span class="num up" id="bnfAtmCE">55100 CE</span> (Delta ~0.50)<br>
-            • <b>Bearish Breakdown:</b> Buy <span class="num down" id="bnfAtmPE">55100 PE</span> (Delta ~0.50)<br>
-            • <i>Options Stop-loss = Exit when Spot crosses 2.0x ATR level</i>
-          </div>
-        </div>
-
-        <!-- Quantitative Rules Summary -->
-        <div class="blueprint-card" style="border-left: 3px solid #38bdf8;">
-          <div class="blueprint-header">
-            <span style="color: #38bdf8;">📋 EXECUTION DISCIPLINE</span>
-            <span style="font-size: 11px; color: #94a3b8;">Rulebook</span>
-          </div>
-          <div class="blueprint-val" style="font-size: 16px; color: #e2e8f0;">Zero-Emotion Trading</div>
-          <div class="blueprint-sub">
-            • Only enters after verified low-range compression day.<br>
-            • Trades only ~17 times/year, avoiding choppy sideways days.<br>
-            • 2.0x ATR buffer prevents premature stop-outs from noise.
-          </div>
-        </div>
-      </div>
-
-      <!-- 10-Year Verified Backtest Performance Scorecard -->
-      <div style="margin-bottom: 14px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <h3 style="font-size: 15px; font-weight: 700; color: #fff;">📊 10-Year Backtest Verification (2016 – 2026 Official Candles)</h3>
-          <span style="font-size: 12px; color: #94a3b8;">2,467 Sessions • 962 Parameter Combinations Evaluated</span>
-        </div>
-        <div class="kpi-grid">
-          <div class="kpi-card" style="border-top: 3px solid #22c55e;">
-            <span class="kpi-label">Profit Factor (P/L Ratio)</span>
-            <span class="kpi-val num" style="color: #4ade80;">1.73</span>
-            <span class="kpi-sub">Highest among all 962 models</span>
-          </div>
-          <div class="kpi-card" style="border-top: 3px solid #38bdf8;">
-            <span class="kpi-label">Empirical Win Rate</span>
-            <span class="kpi-val num" style="color: #38bdf8;">63.5%</span>
-            <span class="kpi-sub">108 Wins / 62 Losses (170 Trades)</span>
-          </div>
-          <div class="kpi-card" style="border-top: 3px solid #a855f7;">
-            <span class="kpi-label">10-Year Total Net Points</span>
-            <span class="kpi-val num" style="color: #c084fc;">+54,335 pts</span>
-            <span class="kpi-sub">Gross +128.6k / Loss -74.3k</span>
-          </div>
-          <div class="kpi-card" style="border-top: 3px solid #fbbf24;">
-            <span class="kpi-label">Net Profit (1 Lot Futures)</span>
-            <span class="kpi-val num" style="color: #fbbf24;">₹8,15,025</span>
-            <span class="kpi-sub">2 Lots: ₹16,30,050 / 5 Lots: ₹40.7L</span>
-          </div>
-          <div class="kpi-card" style="border-top: 3px solid #f87171;">
-            <span class="kpi-label">Max Drawdown</span>
-            <span class="kpi-val num" style="color: #f87171;">-6,097 pts</span>
-            <span class="kpi-sub">Only -₹91,455 per 1 lot (Low Risk)</span>
-          </div>
-          <div class="kpi-card" style="border-top: 3px solid #34d399;">
-            <span class="kpi-label">Mathematical Expectancy</span>
-            <span class="kpi-val num" style="color: #34d399;">+320 pts</span>
-            <span class="kpi-sub">Expected gain on every trade</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Interactive Position Sizing & Capital Calculator -->
-      <div class="calc-box">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-          <h3 style="font-size: 15px; font-weight: 700; color: #fff;">🧮 Interactive Position Sizing & Return Calculator</h3>
-          <div class="calc-controls">
-            <label style="font-size: 13px; color: #94a3b8;">Futures Lots:
-              <select id="bnfLotSelect" class="calc-select" onchange="updateBnfCalc()">
-                <option value="1">1 Lot (15 Qty)</option>
-                <option value="2">2 Lots (30 Qty)</option>
-                <option value="3">3 Lots (45 Qty)</option>
-                <option value="5">5 Lots (75 Qty)</option>
-                <option value="10">10 Lots (150 Qty)</option>
-              </select>
-            </label>
-            <label style="font-size: 13px; color: #94a3b8;">Target Mode:
-              <select id="bnfTargetMode" class="calc-select" onchange="updateBnfCalc()">
-                <option value="2x">2.0x ATR (Balanced: 63.5% Win, PF 1.73)</option>
-                <option value="3x">3.0x ATR (Runner: 52.6% Win, 1.5x Payoff)</option>
-              </select>
-            </label>
-          </div>
-        </div>
-
-        <div class="calc-output-grid">
-          <div>
-            <div class="kpi-label">Projected Net INR Profit</div>
-            <div class="num up" style="font-size: 18px; font-weight: 800;" id="calcNetINR">₹8,15,025</div>
-          </div>
-          <div>
-            <div class="kpi-label">Max Historical Drawdown</div>
-            <div class="num down" style="font-size: 18px; font-weight: 800;" id="calcMaxDDINR">₹91,455</div>
-          </div>
-          <div>
-            <div class="kpi-label">Risk Per Trade (2x ATR)</div>
-            <div class="num" style="font-size: 18px; font-weight: 800; color: #fca5a5;" id="calcRiskINR">₹20,400</div>
-          </div>
-          <div>
-            <div class="kpi-label">Target Gain Per Trade</div>
-            <div class="num" style="font-size: 18px; font-weight: 800; color: #86efac;" id="calcRewardINR">₹20,400</div>
-          </div>
-          <div>
-            <div class="kpi-label">Approx Margin Needed</div>
-            <div class="num" style="font-size: 18px; font-weight: 800; color: #cbd5e1;" id="calcMarginReq">₹1,35,000</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Recent Sessions Signal Verification Table -->
-      <div style="margin-bottom: 14px;">
-        <h3 style="font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 10px;">📅 Recent Sessions Signal Verification Log</h3>
-        <div class="table-container" style="max-height: 280px;">
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Open (₹)</th>
-                <th>High (₹)</th>
-                <th>Low (₹)</th>
-                <th>Close (₹)</th>
-                <th>Range (pts)</th>
-                <th>ATR14</th>
-                <th>Squeeze Filter</th>
-                <th>Signal</th>
-                <th>Outcome</th>
-              </tr>
-            </thead>
-            <tbody id="bnfSessionRows">
-              <tr><td colspan="10" style="text-align: center; padding: 20px; color: #94a3b8;">Loading historical verification sessions...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Interactive TradingView Live Chart Widget -->
-      <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; margin-bottom: 14px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <h3 style="font-size: 15px; font-weight: 700; color: #fff;">📈 Live Interactive TradingView Chart (BANKNIFTY)</h3>
-          <span style="font-size: 12px; color: #94a3b8;">Daily Candles &bull; Interactive Candlesticks</span>
-        </div>
-        <div style="height: 480px; width: 100%; border-radius: 8px; overflow: hidden; border: 1px solid #1e293b;">
-          <iframe 
-            src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_bnf&symbol=NSE%3ABANKNIFTY&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=%5B%5D&theme=dark&style=1&timezone=Asia%2FKolkata&withdateranges=1&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=en&utm_source=localhost"
-            style="width: 100%; height: 100%; border: none;"
-            title="TradingView Bank Nifty Chart">
-          </iframe>
-        </div>
-      </div>
-
-      <!-- TradingView Pine Script v5 Code Box -->
-      <div class="pine-container">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-          <div>
-            <h3 style="font-size: 15px; font-weight: 700; color: #fff;">🌲 TradingView Pine Script (v5 Strategy)</h3>
-            <span style="font-size: 12px; color: #94a3b8;">Paste directly into TradingView Pine Editor on BANKNIFTY Daily Chart</span>
-          </div>
-          <button class="btn" id="copyPineBtn" onclick="copyPineScript()">📋 Copy Pine Script</button>
-        </div>
-        <div class="code-box" id="pineScriptCodeEl">Loading Pine Script strategy code...</div>
-      </div>
+    <!-- View Container: Table (Scrollable with Sticky Header) -->
+    <div id="tableView" class="table-container" style="display: none;">
+      <table>
+        <thead>
+          <tr>
+            <th>Symbol</th>
+            <th>Live Price (₹)</th>
+            <th>1D Change</th>
+            <th>Futures Action</th>
+            <th>Score</th>
+            <th>Stop-Loss (₹)</th>
+            <th>Target 1 (1:1)</th>
+            <th>Target 2 (1:2)</th>
+            <th>Regime</th>
+            <th>Rationale</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="stockRows">
+          <tr><td colspan="11" style="text-align: center; padding: 40px; color: #94a3b8;">Connecting to live NSE feed...</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
@@ -1251,35 +761,6 @@
   </div>
 
   <script>
-    // Tab Management
-    let currentMainTab = 'screener';
-
-    function switchMainTab(tab) {
-      currentMainTab = tab;
-      const screenerEl = document.getElementById('screenerView');
-      const bnfEl = document.getElementById('bankniftyView');
-      const btnScreener = document.getElementById('tabBtnScreener');
-      const btnBnf = document.getElementById('tabBtnBankNifty');
-
-      if (tab === 'banknifty') {
-        screenerEl.style.display = 'none';
-        bnfEl.style.display = 'block';
-        btnScreener.classList.remove('active');
-        btnBnf.classList.add('active');
-        window.location.hash = '#banknifty';
-        localStorage.setItem('stockwatch_active_tab', 'banknifty');
-        fetchBankNiftyStrategy();
-      } else {
-        screenerEl.style.display = 'block';
-        bnfEl.style.display = 'none';
-        btnScreener.classList.add('active');
-        btnBnf.classList.remove('active');
-        window.location.hash = '#screener';
-        localStorage.setItem('stockwatch_active_tab', 'screener');
-      }
-    }
-
-    // Modal Helpers
     function openHelpModal() { document.getElementById('helpModal').style.display = 'flex'; }
     function closeHelpModal() { document.getElementById('helpModal').style.display = 'none'; }
     window.addEventListener('keydown', e => { if (e.key === 'Escape') closeHelpModal(); });
@@ -1310,9 +791,6 @@
     }
     applyViewMode();
 
-    // ==============================================================================
-    // DATA FETCHER: SCREENER STOCKS
-    // ==============================================================================
     let isFetching = false;
     async function fetchData() {
       if (isFetching) return;
@@ -1340,7 +818,7 @@
         const cardsContainer = document.getElementById('cardsView');
         cardsContainer.innerHTML = '';
 
-        // Ticker Tape
+        // 1. Ticker Tape
         const tickerTrack = document.getElementById('tickerTrack');
         if (tickerTrack && data.stocks.length > 0) {
           let tickerHtml = '';
@@ -1353,7 +831,7 @@
           tickerTrack.innerHTML = tickerHtml;
         }
 
-        // Rows and Cards
+        // 2. Rows and Cards
         data.stocks.forEach(s => {
           const isShort = s.signal.includes('SHORT');
           const isLong = s.signal.includes('LONG');
@@ -1476,163 +954,8 @@
       fetchData();
     }
 
-    // ==============================================================================
-    // DATA FETCHER: BANK NIFTY QUANT STRATEGY
-    // ==============================================================================
-    let cachedBnf = null;
-    async function fetchBankNiftyStrategy() {
-      try {
-        const res = await fetch('/api/banknifty-strategy');
-        const data = await res.json();
-        if (!data || !data.live) return;
-        cachedBnf = data;
-
-        // Spot prices & Day stats
-        document.getElementById('bnfLivePrice').innerText = '₹' + data.live.price.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-        const chgSign = data.live.changePts >= 0 ? '+' : '';
-        const chgClass = data.live.changePts >= 0 ? 'up' : 'down';
-        const chgEl = document.getElementById('bnfLiveChange');
-        chgEl.className = 'bnf-chg-huge num ' + chgClass;
-        chgEl.innerText = `${chgSign}${data.live.changePts.toFixed(2)} (${chgSign}${data.live.changePct.toFixed(2)}%)`;
-
-        document.getElementById('bnfTodayHigh').innerText = '₹' + data.live.high.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-        document.getElementById('bnfTodayLow').innerText = '₹' + data.live.low.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-        document.getElementById('bnfTodayATR').innerText = data.live.curATR.toLocaleString('en-IN') + ' pts';
-        document.getElementById('bnfTodayRange').innerText = data.live.curRange.toLocaleString('en-IN') + ' pts';
-        document.getElementById('bnfCompressionRatio').innerText = data.live.compressionRatio + 'x ATR';
-
-        // Signal Banner
-        const banner = document.getElementById('bnfSignalBanner');
-        const bannerText = document.getElementById('bnfSignalText');
-        const bannerSub = document.getElementById('bnfSignalSubText');
-
-        if (data.setup.signalType === 'BUY') {
-          banner.className = 'bnf-signal-banner bnf-signal-buy';
-          bannerText.innerText = '🟢 BULLISH BREAKOUT TRIGGERED (BUY)';
-          bannerSub.innerText = `Bank Nifty trading above Previous Day High (₹${data.setup.longTrigger.toLocaleString('en-IN')})`;
-        } else if (data.setup.signalType === 'SELL') {
-          banner.className = 'bnf-signal-banner bnf-signal-sell';
-          bannerText.innerText = '🔴 BEARISH BREAKDOWN TRIGGERED (SELL)';
-          bannerSub.innerText = `Bank Nifty trading below Previous Day Low (₹${data.setup.shortTrigger.toLocaleString('en-IN')})`;
-        } else if (data.setup.signalType === 'SQUEEZE') {
-          banner.className = 'bnf-signal-banner bnf-signal-squeeze';
-          bannerText.innerText = '🟡 VOLATILITY SQUEEZE ACTIVE (ENERGY COILED)';
-          bannerSub.innerText = 'Inside yesterday range. Watch for breakout above ' + data.setup.longTrigger.toLocaleString('en-IN') + ' or below ' + data.setup.shortTrigger.toLocaleString('en-IN');
-        } else {
-          banner.className = 'bnf-signal-banner bnf-signal-wait';
-          bannerText.innerText = '⚪ WAITING FOR SETUP (Normal Trading Range)';
-          bannerSub.innerText = data.live.todayIsSqueeze ? '🟡 Today is currently contracting! Tomorrow may trigger a high-conviction breakout.' : 'Previous day did not meet squeeze compression criteria (< 0.85x ATR). Standing aside.';
-        }
-
-        // Execution Blueprint
-        document.getElementById('bnfLongTrigger').innerText = 'Above ₹' + data.setup.longTrigger.toLocaleString('en-IN');
-        document.getElementById('bnfLongSL').innerText = '₹' + data.setup.longSL.toLocaleString('en-IN');
-        document.getElementById('bnfLongTP1').innerText = '₹' + data.setup.longTP1.toLocaleString('en-IN');
-        document.getElementById('bnfLongTP2').innerText = '₹' + data.setup.longTP2.toLocaleString('en-IN');
-
-        document.getElementById('bnfShortTrigger').innerText = 'Below ₹' + data.setup.shortTrigger.toLocaleString('en-IN');
-        document.getElementById('bnfShortSL').innerText = '₹' + data.setup.shortSL.toLocaleString('en-IN');
-        document.getElementById('bnfShortTP1').innerText = '₹' + data.setup.shortTP1.toLocaleString('en-IN');
-        document.getElementById('bnfShortTP2').innerText = '₹' + data.setup.shortTP2.toLocaleString('en-IN');
-
-        document.getElementById('bnfATMStrikes').innerText = data.setup.atmStrike.toLocaleString('en-IN') + ' ATM';
-        document.getElementById('bnfAtmCE').innerText = data.setup.atmCE;
-        document.getElementById('bnfAtmPE').innerText = data.setup.atmPE;
-
-        // Populate Recent Sessions Table
-        const sessTbody = document.getElementById('bnfSessionRows');
-        sessTbody.innerHTML = '';
-        data.recentSessions.forEach(s => {
-          const tr = document.createElement('tr');
-          const isSqueezeBadge = s.compressionSetup ? '<span class="badge" style="background:rgba(245,158,11,0.2);color:#fbbf24;border:1px solid rgba(245,158,11,0.4);">COILED SPRING</span>' : '<span style="color:#64748b;">Normal</span>';
-          let sigClass = '#94a3b8';
-          if (s.signal.includes('BUY')) sigClass = '#4ade80';
-          else if (s.signal.includes('SELL')) sigClass = '#f87171';
-          
-          tr.innerHTML = `
-            <td><b>${s.date}</b></td>
-            <td class="num">₹${s.open.toLocaleString('en-IN')}</td>
-            <td class="num">₹${s.high.toLocaleString('en-IN')}</td>
-            <td class="num">₹${s.low.toLocaleString('en-IN')}</td>
-            <td class="num"><b>₹${s.close.toLocaleString('en-IN')}</b></td>
-            <td class="num">${s.range.toLocaleString('en-IN')} pts</td>
-            <td class="num">${s.atr.toLocaleString('en-IN')} pts</td>
-            <td>${isSqueezeBadge}</td>
-            <td style="color:${sigClass};font-weight:700;">${s.signal}</td>
-            <td style="color:#cbd5e1;font-size:12px;">${s.outcome}</td>
-          `;
-          sessTbody.appendChild(tr);
-        });
-
-        // Update Dynamic Calculator
-        updateBnfCalc();
-
-        // Load Pine Script Code
-        if (document.getElementById('pineScriptCodeEl').innerText.includes('Loading')) {
-          const pRes = await fetch('/api/pine-script');
-          const pCode = await pRes.text();
-          document.getElementById('pineScriptCodeEl').innerText = pCode;
-        }
-      } catch (err) {
-        console.error('Error fetching BNF Strategy:', err);
-      }
-    }
-
-    // Dynamic Position & Profit Calculator
-    function updateBnfCalc() {
-      const lots = parseInt(document.getElementById('bnfLotSelect').value, 10) || 1;
-      const targetMode = document.getElementById('bnfTargetMode').value;
-      const qty = lots * 15; // 1 lot = 15 Bank Nifty futures
-      
-      let netPts = 54335;
-      let maxDD = 6097;
-      if (targetMode === '3x') {
-        netPts = 42795;
-        maxDD = 9026;
-      }
-
-      const netINR = netPts * qty;
-      const maxDD_INR = maxDD * qty;
-      const marginEst = lots * 135000;
-      const curATR = cachedBnf ? cachedBnf.live.curATR : 680;
-      const riskPerTradeINR = Math.round(2.0 * curATR * qty);
-      const rewardPerTradeINR = Math.round((targetMode === '3x' ? 3.0 : 2.0) * curATR * qty);
-
-      document.getElementById('calcNetINR').innerText = '₹' + netINR.toLocaleString('en-IN');
-      document.getElementById('calcMaxDDINR').innerText = '-₹' + maxDD_INR.toLocaleString('en-IN');
-      document.getElementById('calcMarginReq').innerText = '₹' + marginEst.toLocaleString('en-IN');
-      document.getElementById('calcRiskINR').innerText = '₹' + riskPerTradeINR.toLocaleString('en-IN');
-      document.getElementById('calcRewardINR').innerText = '₹' + rewardPerTradeINR.toLocaleString('en-IN');
-    }
-
-    // Copy Pine Script to Clipboard
-    function copyPineScript() {
-      const code = document.getElementById('pineScriptCodeEl').innerText;
-      navigator.clipboard.writeText(code).then(() => {
-        const btn = document.getElementById('copyPineBtn');
-        const oldText = btn.innerHTML;
-        btn.innerHTML = '✅ Copied to Clipboard!';
-        btn.style.background = '#22c55e';
-        setTimeout(() => {
-          btn.innerHTML = oldText;
-          btn.style.background = '';
-        }, 2500);
-      });
-    }
-
-    // URL Hash / Routing on Load
-    const initialHash = window.location.hash;
-    const savedTab = localStorage.getItem('stockwatch_active_tab');
-    if (window.location.pathname === '/banknifty' || initialHash === '#banknifty' || (savedTab === 'banknifty' && initialHash !== '#screener')) {
-      switchMainTab('banknifty');
-    }
-
-    // Auto-fetch on load and repeat
     fetchData();
     setInterval(fetchData, 5000);
-    setInterval(() => {
-      if (currentMainTab === 'banknifty') fetchBankNiftyStrategy();
-    }, 8000);
   </script>
 </body>
 </html>

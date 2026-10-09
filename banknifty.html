@@ -1,0 +1,1712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Bank Nifty Quant & Options Paper Trading Terminal</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231e3a8a'/%3E%3Cpath d='M14 44 L26 28 L36 36 L50 18' stroke='%2338bdf8' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Cpath d='M40 18 H50 V28' stroke='%2338bdf8' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --bg-main: #080d1a;
+      --bg-card: #0f172a;
+      --bg-card-alt: #131d36;
+      --bg-input: #1e293b;
+      --border-color: #1e293b;
+      --border-light: #334155;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --green-bg: rgba(34, 197, 94, 0.15);
+      --green-border: rgba(34, 197, 94, 0.35);
+      --green-text: #4ade80;
+      --red-bg: rgba(239, 68, 68, 0.15);
+      --red-border: rgba(239, 68, 68, 0.35);
+      --red-text: #f87171;
+      --blue-btn: #2563eb;
+      --cyan-text: #38bdf8;
+      --gold-text: #fbbf24;
+    }
+
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; }
+    body { background: var(--bg-main); color: var(--text-main); padding: 14px; min-height: 100vh; scroll-behavior: smooth; }
+    .container { max-width: 1440px; margin: 0 auto; display: flex; flex-direction: column; min-height: calc(100vh - 28px); }
+
+    /* Custom Modern Scrollbars */
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: #080d1a; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    * { scrollbar-width: thin; scrollbar-color: #334155 #080d1a; }
+
+    /* Top Bar */
+    .top-bar {
+      background: var(--bg-card);
+      padding: 14px 18px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .brand-title {
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .market-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 4px 11px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .market-badge.market-live {
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.35);
+      color: #4ade80;
+    }
+    .market-badge.market-live .status-dot {
+      width: 7px;
+      height: 7px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #22c55e;
+      animation: pulse 1.5s infinite;
+    }
+    .market-badge.market-closed {
+      background: rgba(148, 163, 184, 0.1);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      color: #94a3b8;
+    }
+    .market-badge.market-closed .status-dot {
+      width: 7px;
+      height: 7px;
+      background: #ef4444;
+      border-radius: 50%;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.8); } }
+
+    .meta-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+    }
+    .nav-screener-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #cbd5e1;
+      text-decoration: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .nav-screener-btn:hover {
+      background: #334155;
+      color: #fff;
+    }
+
+    /* Page Navigation Tabs */
+    .bnf-nav-tabs {
+      display: flex;
+      gap: 8px;
+      background: var(--bg-card);
+      padding: 6px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 14px;
+    }
+    .bnf-tab-btn {
+      flex: 1;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .bnf-tab-btn:hover {
+      background: rgba(255, 255, 255, 0.04);
+      color: #fff;
+    }
+    .bnf-tab-btn.active {
+      background: #1e293b;
+      color: var(--cyan-text);
+      border-color: #334155;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    }
+    .tab-badge {
+      background: rgba(34, 197, 94, 0.2);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    /* Common typography / utility */
+    .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+    .up { color: var(--green-text); font-weight: 600; }
+    .down { color: var(--red-text); font-weight: 600; }
+    .btn {
+      background: var(--blue-btn);
+      color: #fff;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 38px;
+      white-space: nowrap;
+    }
+    .btn:hover { background: #1d4ed8; }
+    .btn-secondary {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #cbd5e1;
+    }
+    .btn-secondary:hover { background: #334155; color: #fff; }
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+    .btn-danger:hover { background: #ef4444; color: #fff; }
+    .badge {
+      padding: 4px 9px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 11px;
+      display: inline-block;
+      letter-spacing: 0.3px;
+    }
+    .badge-buy { background: var(--green-bg); color: var(--green-text); border: 1px solid var(--green-border); }
+    .badge-short { background: var(--red-bg); color: var(--red-text); border: 1px solid var(--red-border); }
+    .badge-hold { background: rgba(148, 163, 184, 0.1); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.2); }
+
+    /* ===================================================
+       TAB 1: DUMMY / PAPER TRADING TERMINAL
+       =================================================== */
+    /* Virtual Portfolio HUD */
+    .portfolio-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .portfolio-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .portfolio-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+    .portfolio-val {
+      font-size: 22px;
+      font-weight: 800;
+    }
+    .portfolio-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Auto-Trade Controller Banner */
+    .autotrade-card {
+      background: linear-gradient(135deg, #0e1b38 0%, #172554 100%);
+      border: 1px solid #1e3a8a;
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .autotrade-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .autotrade-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .autotrade-desc {
+      font-size: 12px;
+      color: #93c5fd;
+      max-width: 650px;
+      line-height: 1.4;
+    }
+    .autotrade-controls {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 54px;
+      height: 28px;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #334155;
+      transition: .3s;
+      border-radius: 28px;
+    }
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    input:checked + .toggle-slider {
+      background-color: #22c55e;
+    }
+    input:checked + .toggle-slider:before {
+      transform: translateX(26px);
+    }
+
+    /* Trading Grid: Manual Ticket (Left) & Active Positions (Right) */
+    .trading-layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    @media (max-width: 992px) {
+      .trading-layout { grid-template-columns: 1fr; }
+    }
+
+    /* Manual Order Ticket */
+    .ticket-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .ticket-header {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 10px;
+    }
+    .ticket-opt-type {
+      display: flex;
+      gap: 8px;
+    }
+    .opt-type-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid transparent;
+      text-align: center;
+      transition: 0.2s;
+    }
+    .opt-type-btn.call {
+      background: rgba(34, 197, 94, 0.1);
+      color: #86efac;
+      border-color: rgba(34, 197, 94, 0.3);
+    }
+    .opt-type-btn.call.active {
+      background: #22c55e;
+      color: #000;
+      font-weight: 800;
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+    }
+    .opt-type-btn.put {
+      background: rgba(239, 68, 68, 0.1);
+      color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+    .opt-type-btn.put.active {
+      background: #ef4444;
+      color: #fff;
+      font-weight: 800;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+    .form-select, .form-input {
+      background: var(--bg-input);
+      border: 1px solid var(--border-light);
+      color: #fff;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      outline: none;
+      width: 100%;
+    }
+    .form-select:focus, .form-input:focus {
+      border-color: #3b82f6;
+    }
+    .ticket-summary-box {
+      background: #090e1a;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12px;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-muted);
+    }
+    .summary-row b { color: #fff; }
+
+    /* Open Positions & Orders */
+    .positions-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .table-container {
+      background: #090e1a;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+      min-width: 650px;
+    }
+    thead {
+      background: #141c30;
+    }
+    th, td {
+      padding: 11px 13px;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+    th {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+
+    /* ===================================================
+       TAB 2: LIVE STRATEGY & CHART
+       =================================================== */
+    .bnf-hero-card {
+      background: linear-gradient(135deg, #0c162e 0%, #131f3e 100%);
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .bnf-hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+    .bnf-price-huge {
+      font-size: 28px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+    .bnf-chg-huge {
+      font-size: 15px;
+      font-weight: 700;
+      margin-left: 6px;
+    }
+    .bnf-metrics-row {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      font-size: 13px;
+      color: var(--text-muted);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding-top: 12px;
+    }
+    .bnf-signal-banner {
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .bnf-signal-buy {
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      color: #4ade80;
+    }
+    .bnf-signal-sell {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #f87171;
+    }
+    .bnf-signal-squeeze {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: #fbbf24;
+    }
+    .bnf-signal-wait {
+      background: rgba(148, 163, 184, 0.1);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      color: #94a3b8;
+    }
+
+    .blueprint-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .blueprint-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* 10-Yr Backtest KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    /* ===================================================
+       TAB 3: PINE SCRIPT & RULES
+       =================================================== */
+    .pine-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .code-box {
+      background: #090e1a;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 16px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      color: #cbd5e1;
+      max-height: 460px;
+      overflow-y: auto;
+      white-space: pre;
+      line-height: 1.55;
+    }
+
+    /* Toast Notification */
+    #toastMsg {
+      display: none;
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e293b;
+      border: 1px solid #3b82f6;
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      font-size: 13px;
+      font-weight: 700;
+      z-index: 99999;
+      align-items: center;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <div class="brand-group">
+        <h1 class="brand-title">🏦 Bank Nifty Quant & Paper Trading Terminal</h1>
+        <div id="marketBadge" class="market-badge market-closed">
+          <div class="status-dot"></div>
+          <span id="marketBadgeText">CHECKING MARKET...</span>
+        </div>
+      </div>
+      <div class="meta-group">
+        <a href="/" class="nav-screener-btn">📊 StockWatch Screener</a>
+        <span style="color: #64748b;">|</span>
+        <span id="marketDetailText" style="color: #94a3b8; font-size: 12px;">Market Closed</span>
+        <span style="color: #64748b;">|</span>
+        <span>IST: <b id="updateTime" style="color: #f1f5f9;">Loading...</b></span>
+      </div>
+    </div>
+
+    <!-- MAIN NAVIGATION TABS ON THIS DEDICATED PAGE -->
+    <div class="bnf-nav-tabs">
+      <button class="bnf-tab-btn active" id="tabBtnPaper" onclick="switchBnfTab('paper')">
+        <span>🎮</span> Paper Trading (Options Auto & Manual)
+      </button>
+      <button class="bnf-tab-btn" id="tabBtnStrategy" onclick="switchBnfTab('strategy')">
+        <span>⚡</span> Live Strategy & Chart <span class="tab-badge">PF 1.73</span>
+      </button>
+      <button class="bnf-tab-btn" id="tabBtnPine" onclick="switchBnfTab('pine')">
+        <span>🌲</span> Pine Script & System Rules
+      </button>
+    </div>
+
+    <!-- ============================================================================== -->
+    <!-- TAB 1: DUMMY / PAPER TRADING (OPTIONS AUTO & MANUAL) -->
+    <!-- ============================================================================== -->
+    <div id="tabPaperView">
+      <!-- Virtual Portfolio HUD -->
+      <div class="portfolio-grid">
+        <div class="portfolio-card" style="border-top: 3px solid #38bdf8;">
+          <span class="portfolio-label">Virtual Capital</span>
+          <span class="portfolio-val num" id="portBalance">₹5,00,000</span>
+          <span class="portfolio-sub">Starting Margin</span>
+        </div>
+        <div class="portfolio-card" style="border-top: 3px solid #22c55e;">
+          <span class="portfolio-label">Available Cash</span>
+          <span class="portfolio-val num up" id="portAvailable">₹5,00,000</span>
+          <span class="portfolio-sub">Free for new trades</span>
+        </div>
+        <div class="portfolio-card" style="border-top: 3px solid #a855f7;">
+          <span class="portfolio-label">Invested in Options</span>
+          <span class="portfolio-val num" id="portInvested">₹0</span>
+          <span class="portfolio-sub">Capital in Open Positions</span>
+        </div>
+        <div class="portfolio-card" style="border-top: 3px solid #fbbf24;">
+          <span class="portfolio-label">Unrealized P&L</span>
+          <span class="portfolio-val num" id="portUnrealized" style="color: #94a3b8;">₹0.00</span>
+          <span class="portfolio-sub">Live Open Positions P&L</span>
+        </div>
+        <div class="portfolio-card" style="border-top: 3px solid #34d399;">
+          <span class="portfolio-label">Realized P&L</span>
+          <span class="portfolio-val num" id="portRealized" style="color: #94a3b8;">₹0.00</span>
+          <span class="portfolio-sub">Booked Profits / Losses</span>
+        </div>
+        <div class="portfolio-card" style="border-top: 3px solid #f59e0b;">
+          <span class="portfolio-label">Paper Trade Stats</span>
+          <span class="portfolio-val num" id="portWinRate">0%</span>
+          <span class="portfolio-sub" id="portTradesCount">0 Trades Closed</span>
+        </div>
+      </div>
+
+      <!-- Auto-Trading Mode Controller Banner -->
+      <div class="autotrade-card">
+        <div class="autotrade-info">
+          <div class="autotrade-title">
+            <span>🤖 QUANT AUTO-TRADE BOT (BANK NIFTY OPTIONS)</span>
+            <span class="badge" id="autoStatusBadge" style="background: rgba(148,163,184,0.15); color: #94a3b8;">STANDBY</span>
+          </div>
+          <div class="autotrade-desc">
+            When enabled, the bot automatically buys <b>ATM Call (CE)</b> on Bullish Breakout (&gt; Prev High) or <b>ATM Put (PE)</b> on Bearish Breakdown (&lt; Prev Low) whenever the Coiled Squeeze compression setup triggers. Exits automatically on Target or Stop-Loss!
+          </div>
+        </div>
+
+        <div class="autotrade-controls">
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 11px; color: #93c5fd; font-weight: 700;">AUTO LOTS:</label>
+            <select id="autoLotSelect" class="form-select" style="padding: 6px 10px; width: 140px;">
+              <option value="1">1 Lot (15 Qty)</option>
+              <option value="2">2 Lots (30 Qty)</option>
+              <option value="3">3 Lots (45 Qty)</option>
+            </select>
+          </div>
+
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+            <span style="font-size: 11px; color: #93c5fd; font-weight: 700;">AUTO-TRADE</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="autoTradeToggle" onchange="toggleAutoTrading(this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trading Layout: Manual Ticket (Left) & Active Positions (Right) -->
+      <div class="trading-layout">
+        <!-- Manual Order Ticket -->
+        <div class="ticket-card">
+          <div class="ticket-header">
+            <span>⚡ Manual Option Buy Order</span>
+            <span class="badge badge-buy">MARKET BUY</span>
+          </div>
+
+          <!-- Call / Put Selector -->
+          <div class="form-group">
+            <span class="form-label">SELECT OPTION TYPE:</span>
+            <div class="ticket-opt-type">
+              <div class="opt-type-btn call active" id="btnCallType" onclick="setOptionType('CE')">🟢 CALL (CE)</div>
+              <div class="opt-type-btn put" id="btnPutType" onclick="setOptionType('PE')">🔴 PUT (PE)</div>
+            </div>
+          </div>
+
+          <!-- Spot & Strike -->
+          <div class="form-group">
+            <div class="form-label">
+              <span>SELECT STRIKE:</span>
+              <span>Spot: <b class="num" id="ticketSpotRef">₹55,200</b></span>
+            </div>
+            <select id="ticketStrikeSelect" class="form-select" onchange="recalculateTicket()">
+              <option value="55000">55,000 (Deep ITM)</option>
+              <option value="55100">55,100 (ITM)</option>
+              <option value="55200" selected>55,200 (ATM)</option>
+              <option value="55300">55,300 (OTM)</option>
+              <option value="55400">55,400 (Deep OTM)</option>
+            </select>
+          </div>
+
+          <!-- Quantity / Lots -->
+          <div class="form-group">
+            <div class="form-label">
+              <span>QUANTITY (LOTS):</span>
+              <span id="ticketQtyLabel">15 Qty (1 Lot)</span>
+            </div>
+            <select id="ticketLotSelect" class="form-select" onchange="recalculateTicket()">
+              <option value="1">1 Lot (15 Qty)</option>
+              <option value="2">2 Lots (30 Qty)</option>
+              <option value="3">3 Lots (45 Qty)</option>
+              <option value="5">5 Lots (75 Qty)</option>
+              <option value="10">10 Lots (150 Qty)</option>
+            </select>
+          </div>
+
+          <!-- Risk / Reward Multipliers -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div class="form-group">
+              <span class="form-label">STOP-LOSS (%):</span>
+              <select id="ticketSLPct" class="form-select" onchange="recalculateTicket()">
+                <option value="0.25">25% Loss</option>
+                <option value="0.35" selected>35% Loss (Std)</option>
+                <option value="0.50">50% Loss</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <span class="form-label">TARGET (%):</span>
+              <select id="ticketTPPct" class="form-select" onchange="recalculateTicket()">
+                <option value="0.50">50% Gain</option>
+                <option value="0.65" selected>65% Gain (Std)</option>
+                <option value="1.00">100% (2x Gain)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Order Summary Box -->
+          <div class="ticket-summary-box">
+            <div class="summary-row"><span>Estimated Premium:</span> <b class="num" id="ticketEstPrem">₹385.00</b></div>
+            <div class="summary-row"><span>Required Capital:</span> <b class="num" id="ticketEstMargin" style="color: #fbbf24;">₹5,775.00</b></div>
+            <div class="summary-row"><span>SL Premium Level:</span> <b class="num down" id="ticketSLPrem">₹250.25</b></div>
+            <div class="summary-row"><span>Target Premium Level:</span> <b class="num up" id="ticketTPPrem">₹635.25</b></div>
+          </div>
+
+          <button class="btn" style="background: #2563eb; width: 100%; font-size: 14px; padding: 12px;" onclick="executeManualTrade()">
+            🚀 Execute Paper Buy Order
+          </button>
+        </div>
+
+        <!-- Open Positions Panel -->
+        <div class="positions-panel">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <h3 style="font-size: 16px; font-weight: 700; color: #fff;">📊 Active Open Positions</h3>
+              <span class="badge badge-hold" id="openPosCountBadge">0 Open</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px; min-height: 32px;" onclick="resetPaperAccount()">🔄 Reset Account</button>
+              <button class="btn btn-danger" style="font-size: 12px; padding: 6px 12px; min-height: 32px;" onclick="squareOffAll()">🔴 Square Off All</button>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Symbol & Strike</th>
+                  <th>Type</th>
+                  <th>Qty</th>
+                  <th>Entry</th>
+                  <th>Live Price</th>
+                  <th>P&L (Pts)</th>
+                  <th>Unrealized P&L</th>
+                  <th>SL / Target</th>
+                  <th>Mode</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="openPositionsRows">
+                <tr><td colspan="10" style="text-align: center; padding: 30px; color: #94a3b8;">No open positions currently active. Execute a manual trade or toggle Auto-Trade!</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Trade Execution Log -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+            <h4 style="font-size: 14px; font-weight: 700; color: #cbd5e1;">📜 Closed Trade History</h4>
+            <button class="btn btn-secondary" style="font-size: 11px; padding: 4px 8px; min-height: 28px;" onclick="clearClosedTrades()">Clear Log</button>
+          </div>
+          <div class="table-container" style="max-height: 220px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date & Time</th>
+                  <th>Strike & Type</th>
+                  <th>Qty</th>
+                  <th>Entry</th>
+                  <th>Exit</th>
+                  <th>Points</th>
+                  <th>Net P&L (₹)</th>
+                  <th>Exit Reason</th>
+                </tr>
+              </thead>
+              <tbody id="closedPositionsRows">
+                <tr><td colspan="8" style="text-align: center; padding: 20px; color: #64748b;">No closed trades recorded yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================================== -->
+    <!-- TAB 2: LIVE STRATEGY & CHART -->
+    <!-- ============================================================================== -->
+    <div id="tabStrategyView" style="display: none;">
+      <!-- Hero Live Ribbon -->
+      <div class="bnf-hero-card">
+        <div class="bnf-hero-top">
+          <div>
+            <span style="font-size: 22px; font-weight: 800; color: #fff;">🏦 BANK NIFTY (^NSEBANK)</span>
+            <span class="badge badge-hold" style="margin-left: 8px;">INDEX SPOT</span>
+          </div>
+          <div>
+            <span class="bnf-price-huge num" id="bnfLivePrice">₹55,200.00</span>
+            <span class="bnf-chg-huge num up" id="bnfLiveChange">+0.00 (+0.00%)</span>
+          </div>
+        </div>
+
+        <!-- Live Signal Banner -->
+        <div class="bnf-signal-banner bnf-signal-wait" id="bnfSignalBanner">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 20px;">⚡</span>
+            <div>
+              <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.85;">Current Quant Setup State</div>
+              <div style="font-size: 16px; font-weight: 800;" id="bnfSignalText">WAITING FOR SQUEEZE COMPRESSION</div>
+            </div>
+          </div>
+          <div style="font-size: 12px; font-weight: 600;" id="bnfSignalSubText">Requires Daily Range &lt; 0.85× ATR14 before breakout trigger</div>
+        </div>
+
+        <div class="bnf-metrics-row">
+          <span>Today High: <b class="num" id="bnfTodayHigh">--</b></span>
+          <span>Today Low: <b class="num" id="bnfTodayLow">--</b></span>
+          <span>14-Day ATR: <b class="num" id="bnfTodayATR">-- pts</b></span>
+          <span>Today Range: <b class="num" id="bnfTodayRange">-- pts</b></span>
+          <span>Compression Ratio: <b class="num" id="bnfCompressionRatio">--x ATR</b></span>
+        </div>
+      </div>
+
+      <!-- Actionable Execution Blueprint (4 Boxes) -->
+      <div class="blueprint-grid">
+        <div class="blueprint-card" style="border-left: 3px solid #22c55e;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: #4ade80;">
+            <span>🟢 BUY TRIGGER (Bull Breakout)</span>
+            <span class="num" style="color: #94a3b8;">1:1 to 1.5:1 R:R</span>
+          </div>
+          <div class="num" style="font-size: 20px; font-weight: 800; color: #fff;" id="bnfLongTrigger">Above ₹--</div>
+          <div style="font-size: 12px; color: #94a3b8; line-height: 1.4;">
+            • <b>Stop-Loss (2.0x ATR):</b> <span class="num down" id="bnfLongSL">₹--</span><br>
+            • <b>Target 1 (2.0x ATR):</b> <span class="num up" id="bnfLongTP1">₹--</span><br>
+            • <b>Target 2 (3.0x ATR):</b> <span class="num up" id="bnfLongTP2">₹--</span>
+          </div>
+        </div>
+
+        <div class="blueprint-card" style="border-left: 3px solid #ef4444;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: #f87171;">
+            <span>🔴 SHORT TRIGGER (Bear Breakdown)</span>
+            <span class="num" style="color: #94a3b8;">1:1 to 1.5:1 R:R</span>
+          </div>
+          <div class="num" style="font-size: 20px; font-weight: 800; color: #fff;" id="bnfShortTrigger">Below ₹--</div>
+          <div style="font-size: 12px; color: #94a3b8; line-height: 1.4;">
+            • <b>Stop-Loss (2.0x ATR):</b> <span class="num down" id="bnfShortSL">₹--</span><br>
+            • <b>Target 1 (2.0x ATR):</b> <span class="num up" id="bnfShortTP1">₹--</span><br>
+            • <b>Target 2 (3.0x ATR):</b> <span class="num up" id="bnfShortTP2">₹--</span>
+          </div>
+        </div>
+
+        <div class="blueprint-card" style="border-left: 3px solid #fbbf24;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: #fbbf24;">
+            <span>🎯 OPTIONS STRIKE SELECTION</span>
+            <span style="color: #94a3b8;">Current Expiry</span>
+          </div>
+          <div class="num" style="font-size: 20px; font-weight: 800; color: #fff;" id="bnfATMStrikes">-- ATM</div>
+          <div style="font-size: 12px; color: #94a3b8; line-height: 1.4;">
+            • <b>Bullish Breakout:</b> Buy <span class="num up" id="bnfAtmCE">-- CE</span> (Delta ~0.50)<br>
+            • <b>Bearish Breakdown:</b> Buy <span class="num down" id="bnfAtmPE">-- PE</span> (Delta ~0.50)<br>
+            • <i>Option SL = Triggered on Spot 2.0x ATR cross</i>
+          </div>
+        </div>
+
+        <div class="blueprint-card" style="border-left: 3px solid #38bdf8;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: #38bdf8;">
+            <span>📋 EXECUTION DISCIPLINE</span>
+            <span style="color: #94a3b8;">Rulebook</span>
+          </div>
+          <div style="font-size: 16px; font-weight: 700; color: #e2e8f0;">Zero-Emotion Trading</div>
+          <div style="font-size: 12px; color: #94a3b8; line-height: 1.4;">
+            • Only enters after verified low-range compression day.<br>
+            • Trades only ~17 times/year, avoiding choppy sideways days.<br>
+            • 2.0x ATR buffer prevents premature stop-outs from noise.
+          </div>
+        </div>
+      </div>
+
+      <!-- Live TradingView Chart Widget -->
+      <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; margin-bottom: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="font-size: 15px; font-weight: 700; color: #fff;">📈 Live Interactive TradingView Chart (BANKNIFTY)</h3>
+          <span style="font-size: 12px; color: #94a3b8;">Daily Candles &bull; Interactive Candlesticks</span>
+        </div>
+        <div style="height: 480px; width: 100%; border-radius: 8px; overflow: hidden; border: 1px solid #1e293b;">
+          <iframe 
+            src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_bnf&symbol=NSE%3ABANKNIFTY&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=%5B%5D&theme=dark&style=1&timezone=Asia%2FKolkata&withdateranges=1&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=en&utm_source=localhost"
+            style="width: 100%; height: 100%; border: none;"
+            title="TradingView Bank Nifty Chart">
+          </iframe>
+        </div>
+      </div>
+
+      <!-- 10-Year Verified Backtest Performance Scorecard -->
+      <div style="margin-bottom: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <h3 style="font-size: 15px; font-weight: 700; color: #fff;">📊 10-Year Backtest Verification (2016 – 2026 Official Candles)</h3>
+          <span style="font-size: 12px; color: #94a3b8;">2,467 Sessions • 962 Parameter Combinations Evaluated</span>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi-card" style="border-top: 3px solid #22c55e;">
+            <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Profit Factor</span>
+            <span class="num up" style="font-size: 20px; font-weight: 800;">1.73</span>
+            <span style="font-size: 11px; color: var(--text-muted);">Highest among all 962 models</span>
+          </div>
+          <div class="kpi-card" style="border-top: 3px solid #38bdf8;">
+            <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Empirical Win Rate</span>
+            <span class="num" style="font-size: 20px; font-weight: 800; color: #38bdf8;">63.5%</span>
+            <span style="font-size: 11px; color: var(--text-muted);">108 Wins / 62 Losses (170 Trades)</span>
+          </div>
+          <div class="kpi-card" style="border-top: 3px solid #a855f7;">
+            <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">10-Year Total Net Points</span>
+            <span class="num" style="font-size: 20px; font-weight: 800; color: #c084fc;">+54,335 pts</span>
+            <span style="font-size: 11px; color: var(--text-muted);">Gross +128.6k / Loss -74.3k</span>
+          </div>
+          <div class="kpi-card" style="border-top: 3px solid #fbbf24;">
+            <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Net Profit (1 Lot Futures)</span>
+            <span class="num" style="font-size: 20px; font-weight: 800; color: #fbbf24;">₹8,15,025</span>
+            <span style="font-size: 11px; color: var(--text-muted);">2 Lots: ₹16,30,050</span>
+          </div>
+          <div class="kpi-card" style="border-top: 3px solid #f87171;">
+            <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Max Drawdown</span>
+            <span class="num down" style="font-size: 20px; font-weight: 800;">-6,097 pts</span>
+            <span style="font-size: 11px; color: var(--text-muted);">Only -₹91,455 per 1 lot</span>
+          </div>
+          <div class="kpi-card" style="border-top: 3px solid #34d399;">
+            <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Expectancy / Trade</span>
+            <span class="num up" style="font-size: 20px; font-weight: 800;">+320 pts</span>
+            <span style="font-size: 11px; color: var(--text-muted);">Expected gain on every trade</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Sessions Verification Table -->
+      <div style="margin-bottom: 14px;">
+        <h3 style="font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 10px;">📅 Recent Sessions Signal Verification Log</h3>
+        <div class="table-container" style="max-height: 280px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Open (₹)</th>
+                <th>High (₹)</th>
+                <th>Low (₹)</th>
+                <th>Close (₹)</th>
+                <th>Range (pts)</th>
+                <th>ATR14</th>
+                <th>Squeeze Filter</th>
+                <th>Signal</th>
+                <th>Outcome</th>
+              </tr>
+            </thead>
+            <tbody id="bnfSessionRows">
+              <tr><td colspan="10" style="text-align: center; padding: 20px; color: #94a3b8;">Loading historical verification sessions...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================================== -->
+    <!-- TAB 3: PINE SCRIPT & RULES -->
+    <!-- ============================================================================== -->
+    <div id="tabPineView" style="display: none;">
+      <div class="pine-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <h3 style="font-size: 16px; font-weight: 700; color: #fff;">🌲 TradingView Pine Script v5 Strategy</h3>
+            <span style="font-size: 12px; color: #94a3b8;">Paste directly into TradingView Pine Editor on BANKNIFTY Daily Chart</span>
+          </div>
+          <button class="btn" id="copyPineBtn" onclick="copyPineScript()">📋 Copy Pine Script</button>
+        </div>
+        <div class="code-box" id="pineScriptCodeEl">Loading Pine Script strategy code...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastMsg">
+    <span id="toastIcon">⚡</span>
+    <span id="toastText">Action completed successfully</span>
+  </div>
+
+  <script>
+    // ==============================================================================
+    // TAB MANAGEMENT FOR BANK NIFTY PAGE
+    // ==============================================================================
+    let currentTab = 'paper';
+
+    function switchBnfTab(tab) {
+      currentTab = tab;
+      document.getElementById('tabPaperView').style.display = tab === 'paper' ? 'block' : 'none';
+      document.getElementById('tabStrategyView').style.display = tab === 'strategy' ? 'block' : 'none';
+      document.getElementById('tabPineView').style.display = tab === 'pine' ? 'block' : 'none';
+
+      document.getElementById('tabBtnPaper').classList.toggle('active', tab === 'paper');
+      document.getElementById('tabBtnStrategy').classList.toggle('active', tab === 'strategy');
+      document.getElementById('tabBtnPine').classList.toggle('active', tab === 'pine');
+
+      if (tab === 'pine' && document.getElementById('pineScriptCodeEl').innerText.includes('Loading')) {
+        loadPineScript();
+      }
+    }
+
+    // Toast alert helper
+    function showToast(text, icon = '⚡') {
+      const el = document.getElementById('toastMsg');
+      document.getElementById('toastIcon').innerText = icon;
+      document.getElementById('toastText').innerText = text;
+      el.style.display = 'flex';
+      setTimeout(() => el.style.display = 'none', 3500);
+    }
+
+    // Web Audio Sound Synthesizer (Realistic chimes for trades)
+    function playAudioTone(type) {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (type === 'buy') {
+          osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+          osc.frequency.exponentialRampToValueAtTime(783.99, ctx.currentTime + 0.15); // G5
+          gain.gain.setValueAtTime(0.15, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.25);
+        } else if (type === 'win') {
+          osc.frequency.setValueAtTime(659.25, ctx.currentTime); // E5
+          osc.frequency.exponentialRampToValueAtTime(1046.50, ctx.currentTime + 0.25); // C6
+          gain.gain.setValueAtTime(0.2, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.4);
+        } else if (type === 'loss') {
+          osc.frequency.setValueAtTime(392.00, ctx.currentTime); // G4
+          osc.frequency.exponentialRampToValueAtTime(261.63, ctx.currentTime + 0.25); // C4
+          gain.gain.setValueAtTime(0.2, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.4);
+        }
+      } catch (e) {}
+    }
+
+    // ==============================================================================
+    // DUMMY / PAPER TRADING STATE ENGINE
+    // ==============================================================================
+    const INITIAL_CAPITAL = 500000;
+    let paperState = {
+      balance: INITIAL_CAPITAL,
+      invested: 0,
+      realizedPL: 0,
+      positions: [],
+      closedTrades: [],
+      autoTradingEnabled: false,
+      autoLots: 1,
+      lastAutoSignalProcessed: null
+    };
+
+    // Load persisted paper state
+    function loadPaperState() {
+      try {
+        const saved = localStorage.getItem('banknifty_paper_state_v1');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          paperState = { ...paperState, ...parsed };
+        }
+      } catch (e) {}
+      document.getElementById('autoTradeToggle').checked = paperState.autoTradingEnabled;
+      document.getElementById('autoLotSelect').value = paperState.autoLots || 1;
+      updateAutoStatusBadge();
+      renderPortfolioHUD();
+      renderPositions();
+      renderClosedTrades();
+    }
+
+    function savePaperState() {
+      localStorage.setItem('banknifty_paper_state_v1', JSON.stringify(paperState));
+    }
+
+    function resetPaperAccount() {
+      if (!confirm('Reset paper account to ₹5,00,000 virtual balance and clear all positions?')) return;
+      paperState = {
+        balance: INITIAL_CAPITAL,
+        invested: 0,
+        realizedPL: 0,
+        positions: [],
+        closedTrades: [],
+        autoTradingEnabled: false,
+        autoLots: 1,
+        lastAutoSignalProcessed: null
+      };
+      savePaperState();
+      document.getElementById('autoTradeToggle').checked = false;
+      updateAutoStatusBadge();
+      renderPortfolioHUD();
+      renderPositions();
+      renderClosedTrades();
+      showToast('Paper account reset to ₹5,00,000', '🔄');
+    }
+
+    // Option Pricing Simulator Model (Realistic Intrinsic + Time Value)
+    function estimateOptionPremium(spot, strike, type, atr) {
+      const distance = Math.abs(spot - strike);
+      let intrinsic = 0;
+      if (type === 'CE') intrinsic = Math.max(0, spot - strike);
+      else intrinsic = Math.max(0, strike - spot);
+
+      // Time value is based on daily volatility (ATR)
+      const baseTimeVal = Math.max(75, 0.48 * (atr || 680) - (distance * 0.18));
+      const premium = Math.max(25, intrinsic + baseTimeVal);
+      return Math.round(premium * 10) / 10;
+    }
+
+    // Manual Ticket Controls
+    let ticketType = 'CE';
+
+    function setOptionType(type) {
+      ticketType = type;
+      document.getElementById('btnCallType').classList.toggle('active', type === 'CE');
+      document.getElementById('btnPutType').classList.toggle('active', type === 'PE');
+      recalculateTicket();
+    }
+
+    function recalculateTicket() {
+      const spot = liveBnfData ? liveBnfData.live.price : 55200;
+      const atr = liveBnfData ? liveBnfData.live.curATR : 680;
+      const strike = parseInt(document.getElementById('ticketStrikeSelect').value, 10) || 55200;
+      const lots = parseInt(document.getElementById('ticketLotSelect').value, 10) || 1;
+      const qty = lots * 15;
+      const slPct = parseFloat(document.getElementById('ticketSLPct').value);
+      const tpPct = parseFloat(document.getElementById('ticketTPPct').value);
+
+      document.getElementById('ticketQtyLabel').innerText = `${qty} Qty (${lots} Lot${lots > 1 ? 's' : ''})`;
+
+      const estPrem = estimateOptionPremium(spot, strike, ticketType, atr);
+      const estMargin = Math.round(estPrem * qty);
+      const slPrem = Math.round(estPrem * (1 - slPct) * 10) / 10;
+      const tpPrem = Math.round(estPrem * (1 + tpPct) * 10) / 10;
+
+      document.getElementById('ticketSpotRef').innerText = '₹' + spot.toLocaleString('en-IN');
+      document.getElementById('ticketEstPrem').innerText = '₹' + estPrem.toFixed(2);
+      document.getElementById('ticketEstMargin').innerText = '₹' + estMargin.toLocaleString('en-IN');
+      document.getElementById('ticketSLPrem').innerText = '₹' + slPrem.toFixed(2);
+      document.getElementById('ticketTPPrem').innerText = '₹' + tpPrem.toFixed(2);
+    }
+
+    function executeManualTrade() {
+      const spot = liveBnfData ? liveBnfData.live.price : 55200;
+      const atr = liveBnfData ? liveBnfData.live.curATR : 680;
+      const strike = parseInt(document.getElementById('ticketStrikeSelect').value, 10);
+      const lots = parseInt(document.getElementById('ticketLotSelect').value, 10);
+      const qty = lots * 15;
+      const slPct = parseFloat(document.getElementById('ticketSLPct').value);
+      const tpPct = parseFloat(document.getElementById('ticketTPPct').value);
+
+      const entryPrem = estimateOptionPremium(spot, strike, ticketType, atr);
+      const marginReq = entryPrem * qty;
+
+      if (marginReq > paperState.balance) {
+        alert('Insufficient virtual balance! Required: ₹' + marginReq.toLocaleString('en-IN') + ', Available: ₹' + paperState.balance.toLocaleString('en-IN'));
+        return;
+      }
+
+      const slPrice = Math.round(entryPrem * (1 - slPct) * 10) / 10;
+      const tpPrice = Math.round(entryPrem * (1 + tpPct) * 10) / 10;
+
+      const position = {
+        id: 'POS_' + Date.now(),
+        symbol: `BANKNIFTY ${strike} ${ticketType}`,
+        strike,
+        type: ticketType,
+        qty,
+        lots,
+        entryPrice: entryPrem,
+        currentPrice: entryPrem,
+        slPrice,
+        tpPrice,
+        mode: 'MANUAL',
+        timestamp: new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })
+      };
+
+      paperState.balance -= marginReq;
+      paperState.invested += marginReq;
+      paperState.positions.push(position);
+      savePaperState();
+
+      playAudioTone('buy');
+      showToast(`Bought ${position.symbol} @ ₹${entryPrem.toFixed(2)} (${qty} Qty)`, '🟢');
+      renderPortfolioHUD();
+      renderPositions();
+    }
+
+    // Auto Trading Toggle
+    function toggleAutoTrading(enabled) {
+      paperState.autoTradingEnabled = enabled;
+      paperState.autoLots = parseInt(document.getElementById('autoLotSelect').value, 10) || 1;
+      savePaperState();
+      updateAutoStatusBadge();
+      if (enabled) {
+        showToast('Auto-Trade Bot Active: Scanning for Breakouts!', '🤖');
+      } else {
+        showToast('Auto-Trade Bot Disabled', '⏸️');
+      }
+    }
+
+    function updateAutoStatusBadge() {
+      const badge = document.getElementById('autoStatusBadge');
+      if (paperState.autoTradingEnabled) {
+        badge.className = 'badge badge-buy';
+        badge.innerText = '🟢 ACTIVE SCANNING';
+      } else {
+        badge.className = 'badge badge-hold';
+        badge.innerText = '⚪ STANDBY';
+      }
+    }
+
+    // Check Auto-Trading Breakout Triggers
+    function checkAutoTradeTriggers(data) {
+      if (!paperState.autoTradingEnabled || !data || !data.setup) return;
+
+      const sigType = data.setup.signalType;
+      const spot = data.live.price;
+      const atr = data.live.curATR;
+      const strike = data.setup.atmStrike;
+      const lots = paperState.autoLots || 1;
+      const qty = lots * 15;
+
+      // Avoid executing duplicate trade for same signal wave
+      if (paperState.lastAutoSignalProcessed === sigType) return;
+
+      if (sigType === 'BUY') {
+        const hasOpenLong = paperState.positions.some(p => p.type === 'CE');
+        if (!hasOpenLong) {
+          const entryPrem = estimateOptionPremium(spot, strike, 'CE', atr);
+          const marginReq = entryPrem * qty;
+          if (paperState.balance >= marginReq) {
+            const slPrice = Math.round(entryPrem * 0.65 * 10) / 10;
+            const tpPrice = Math.round(entryPrem * 1.65 * 10) / 10;
+
+            const pos = {
+              id: 'AUTO_' + Date.now(),
+              symbol: `BANKNIFTY ${strike} CE`,
+              strike,
+              type: 'CE',
+              qty,
+              lots,
+              entryPrice: entryPrem,
+              currentPrice: entryPrem,
+              slPrice,
+              tpPrice,
+              mode: 'AUTO',
+              timestamp: new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })
+            };
+
+            paperState.balance -= marginReq;
+            paperState.invested += marginReq;
+            paperState.positions.push(pos);
+            paperState.lastAutoSignalProcessed = 'BUY';
+            savePaperState();
+
+            playAudioTone('buy');
+            showToast(`🤖 Auto-Bot Bought ${pos.symbol} @ ₹${entryPrem.toFixed(2)}`, '⚡');
+            renderPortfolioHUD();
+            renderPositions();
+          }
+        }
+      } else if (sigType === 'SELL') {
+        const hasOpenShort = paperState.positions.some(p => p.type === 'PE');
+        if (!hasOpenShort) {
+          const entryPrem = estimateOptionPremium(spot, strike, 'PE', atr);
+          const marginReq = entryPrem * qty;
+          if (paperState.balance >= marginReq) {
+            const slPrice = Math.round(entryPrem * 0.65 * 10) / 10;
+            const tpPrice = Math.round(entryPrem * 1.65 * 10) / 10;
+
+            const pos = {
+              id: 'AUTO_' + Date.now(),
+              symbol: `BANKNIFTY ${strike} PE`,
+              strike,
+              type: 'PE',
+              qty,
+              lots,
+              entryPrice: entryPrem,
+              currentPrice: entryPrem,
+              slPrice,
+              tpPrice,
+              mode: 'AUTO',
+              timestamp: new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })
+            };
+
+            paperState.balance -= marginReq;
+            paperState.invested += marginReq;
+            paperState.positions.push(pos);
+            paperState.lastAutoSignalProcessed = 'SELL';
+            savePaperState();
+
+            playAudioTone('buy');
+            showToast(`🤖 Auto-Bot Bought ${pos.symbol} @ ₹${entryPrem.toFixed(2)}`, '⚡');
+            renderPortfolioHUD();
+            renderPositions();
+          }
+        }
+      }
+    }
+
+    // Square Off a specific position
+    function squareOffPosition(posId, exitReason = 'Manual Square Off ⚡') {
+      const idx = paperState.positions.findIndex(p => p.id === posId);
+      if (idx === -1) return;
+
+      const pos = paperState.positions[idx];
+      const exitPrem = pos.currentPrice;
+      const pts = Math.round((exitPrem - pos.entryPrice) * 10) / 10;
+      const netPL = Math.round(pts * pos.qty);
+      const isWin = netPL >= 0;
+
+      // Credit cash
+      paperState.balance += (pos.entryPrice * pos.qty) + netPL;
+      paperState.invested -= (pos.entryPrice * pos.qty);
+      paperState.realizedPL += netPL;
+
+      paperState.closedTrades.unshift({
+        symbol: pos.symbol,
+        type: pos.type,
+        qty: pos.qty,
+        entryPrice: pos.entryPrice,
+        exitPrice: exitPrem,
+        pts,
+        netPL,
+        exitReason,
+        timestamp: new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })
+      });
+
+      paperState.positions.splice(idx, 1);
+      savePaperState();
+
+      if (isWin) playAudioTone('win'); else playAudioTone('loss');
+      showToast(`Closed ${pos.symbol}: ${netPL >= 0 ? '+' : ''}₹${netPL.toLocaleString('en-IN')}`, isWin ? '🎯' : '🛑');
+
+      renderPortfolioHUD();
+      renderPositions();
+      renderClosedTrades();
+    }
+
+    function squareOffAll() {
+      if (paperState.positions.length === 0) return;
+      if (!confirm('Square off all ' + paperState.positions.length + ' open positions now?')) return;
+      const posIds = paperState.positions.map(p => p.id);
+      posIds.forEach(id => squareOffPosition(id, 'Square Off All ⚡'));
+    }
+
+    function clearClosedTrades() {
+      paperState.closedTrades = [];
+      savePaperState();
+      renderClosedTrades();
+    }
+
+    // Render HUD
+    function renderPortfolioHUD() {
+      let totalUnrealized = 0;
+      paperState.positions.forEach(p => {
+        totalUnrealized += (p.currentPrice - p.entryPrice) * p.qty;
+      });
+
+      document.getElementById('portBalance').innerText = '₹' + Math.round(paperState.balance + paperState.invested + totalUnrealized).toLocaleString('en-IN');
+      document.getElementById('portAvailable').innerText = '₹' + Math.round(paperState.balance).toLocaleString('en-IN');
+      document.getElementById('portInvested').innerText = '₹' + Math.round(paperState.invested).toLocaleString('en-IN');
+
+      const uEl = document.getElementById('portUnrealized');
+      const uSign = totalUnrealized >= 0 ? '+' : '';
+      uEl.innerText = `${uSign}₹${Math.round(totalUnrealized).toLocaleString('en-IN')}`;
+      uEl.style.color = totalUnrealized > 0 ? '#4ade80' : (totalUnrealized < 0 ? '#f87171' : '#94a3b8');
+
+      const rEl = document.getElementById('portRealized');
+      const rSign = paperState.realizedPL >= 0 ? '+' : '';
+      rEl.innerText = `${rSign}₹${Math.round(paperState.realizedPL).toLocaleString('en-IN')}`;
+      rEl.style.color = paperState.realizedPL > 0 ? '#4ade80' : (paperState.realizedPL < 0 ? '#f87171' : '#94a3b8');
+
+      const totalClosed = paperState.closedTrades.length;
+      const wins = paperState.closedTrades.filter(t => t.netPL > 0).length;
+      const winRate = totalClosed > 0 ? Math.round((wins / totalClosed) * 100) : 0;
+      document.getElementById('portWinRate').innerText = `${winRate}%`;
+      document.getElementById('portTradesCount').innerText = `${totalClosed} Closed (${wins}W / ${totalClosed - wins}L)`;
+    }
+
+    // Render Open Positions Table
+    function renderPositions() {
+      const tbody = document.getElementById('openPositionsRows');
+      document.getElementById('openPosCountBadge').innerText = `${paperState.positions.length} Open`;
+
+      if (paperState.positions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 30px; color: #94a3b8;">No open positions currently active. Execute a manual trade or toggle Auto-Trade!</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = '';
+      paperState.positions.forEach(pos => {
+        const pts = Math.round((pos.currentPrice - pos.entryPrice) * 10) / 10;
+        const pl = Math.round(pts * pos.qty);
+        const plClass = pl >= 0 ? 'up' : 'down';
+        const plSign = pl >= 0 ? '+' : '';
+        const badgeClass = pos.type === 'CE' ? 'badge-buy' : 'badge-short';
+        const modeBadge = pos.mode === 'AUTO' ? '<span class="badge" style="background:#1e3a8a;color:#93c5fd;">🤖 AUTO</span>' : '<span class="badge" style="background:#334155;color:#e2e8f0;">👤 MANUAL</span>';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><b>${pos.symbol}</b></td>
+          <td><span class="badge ${badgeClass}">${pos.type === 'CE' ? 'CALL (CE)' : 'PUT (PE)'}</span></td>
+          <td class="num">${pos.qty}</td>
+          <td class="num">₹${pos.entryPrice.toFixed(2)}</td>
+          <td class="num"><b>₹${pos.currentPrice.toFixed(2)}</b></td>
+          <td class="num ${plClass}">${plSign}${pts.toFixed(2)}</td>
+          <td class="num ${plClass}" style="font-weight: 800;">${plSign}₹${pl.toLocaleString('en-IN')}</td>
+          <td class="num" style="font-size: 11px; color: #94a3b8;">SL: ₹${pos.slPrice.toFixed(2)}<br>TP: ₹${pos.tpPrice.toFixed(2)}</td>
+          <td>${modeBadge}</td>
+          <td><button class="btn btn-danger" style="font-size: 11px; padding: 4px 10px; min-height: 28px;" onclick="squareOffPosition('${pos.id}')">Square Off</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Render Closed Trades Table
+    function renderClosedTrades() {
+      const tbody = document.getElementById('closedPositionsRows');
+      if (paperState.closedTrades.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: #64748b;">No closed trades recorded yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = '';
+      paperState.closedTrades.forEach(t => {
+        const plClass = t.netPL >= 0 ? 'up' : 'down';
+        const plSign = t.netPL >= 0 ? '+' : '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="color: #94a3b8; font-size: 12px;">${t.timestamp}</td>
+          <td><b>${t.symbol}</b></td>
+          <td class="num">${t.qty}</td>
+          <td class="num">₹${t.entryPrice.toFixed(2)}</td>
+          <td class="num">₹${t.exitPrice.toFixed(2)}</td>
+          <td class="num ${plClass}">${plSign}${t.pts.toFixed(2)}</td>
+          <td class="num ${plClass}" style="font-weight: 700;">${plSign}₹${t.netPL.toLocaleString('en-IN')}</td>
+          <td style="font-size: 11px; color: #cbd5e1;">${t.exitReason}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Tick Engine: Updates open positions with simulated option market price movements
+    function updateLiveOptionPrices(spot, atr) {
+      if (paperState.positions.length === 0) return;
+
+      paperState.positions.forEach(pos => {
+        const newPrice = estimateOptionPremium(spot, pos.strike, pos.type, atr);
+        pos.currentPrice = newPrice;
+
+        // Auto Stop-Loss Exit Check
+        if (pos.currentPrice <= pos.slPrice) {
+          setTimeout(() => squareOffPosition(pos.id, 'Stop-Loss Hit 🛑'), 100);
+        }
+        // Auto Target Exit Check
+        else if (pos.currentPrice >= pos.tpPrice) {
+          setTimeout(() => squareOffPosition(pos.id, 'Target Hit 🎯'), 100);
+        }
+      });
+
+      renderPortfolioHUD();
+      renderPositions();
+    }
+
+    // ==============================================================================
+    // DATA FETCHER: BANK NIFTY STRATEGY API
+    // ==============================================================================
+    let liveBnfData = null;
+
+    async function fetchBankNiftyData() {
+      try {
+        const res = await fetch('/api/banknifty-strategy');
+        const data = await res.json();
+        if (!data || !data.live) return;
+        liveBnfData = data;
+
+        document.getElementById('updateTime').innerText = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+        // Update Spot ribbon
+        document.getElementById('bnfLivePrice').innerText = '₹' + data.live.price.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        const chgSign = data.live.changePts >= 0 ? '+' : '';
+        const chgClass = data.live.changePts >= 0 ? 'up' : 'down';
+        const chgEl = document.getElementById('bnfLiveChange');
+        chgEl.className = 'bnf-chg-huge num ' + chgClass;
+        chgEl.innerText = `${chgSign}${data.live.changePts.toFixed(2)} (${chgSign}${data.live.changePct.toFixed(2)}%)`;
+
+        document.getElementById('bnfTodayHigh').innerText = '₹' + data.live.high.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        document.getElementById('bnfTodayLow').innerText = '₹' + data.live.low.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        document.getElementById('bnfTodayATR').innerText = data.live.curATR.toLocaleString('en-IN') + ' pts';
+        document.getElementById('bnfTodayRange').innerText = data.live.curRange.toLocaleString('en-IN') + ' pts';
+        document.getElementById('bnfCompressionRatio').innerText = data.live.compressionRatio + 'x ATR';
+
+        // Signal Banner
+        const banner = document.getElementById('bnfSignalBanner');
+        const bannerText = document.getElementById('bnfSignalText');
+        const bannerSub = document.getElementById('bnfSignalSubText');
+
+        if (data.setup.signalType === 'BUY') {
+          banner.className = 'bnf-signal-banner bnf-signal-buy';
+          bannerText.innerText = '🟢 BULLISH BREAKOUT TRIGGERED (BUY)';
+          bannerSub.innerText = `Bank Nifty trading above Previous Day High (₹${data.setup.longTrigger.toLocaleString('en-IN')})`;
+        } else if (data.setup.signalType === 'SELL') {
+          banner.className = 'bnf-signal-banner bnf-signal-sell';
+          bannerText.innerText = '🔴 BEARISH BREAKDOWN TRIGGERED (SELL)';
+          bannerSub.innerText = `Bank Nifty trading below Previous Day Low (₹${data.setup.shortTrigger.toLocaleString('en-IN')})`;
+        } else if (data.setup.signalType === 'SQUEEZE') {
+          banner.className = 'bnf-signal-banner bnf-signal-squeeze';
+          bannerText.innerText = '🟡 VOLATILITY SQUEEZE ACTIVE (ENERGY COILED)';
+          bannerSub.innerText = 'Inside yesterday range. Watch for breakout above ' + data.setup.longTrigger.toLocaleString('en-IN') + ' or below ' + data.setup.shortTrigger.toLocaleString('en-IN');
+        } else {
+          banner.className = 'bnf-signal-banner bnf-signal-wait';
+          bannerText.innerText = '⚪ WAITING FOR SETUP (Normal Trading Range)';
+          bannerSub.innerText = data.live.todayIsSqueeze ? '🟡 Today is currently contracting! Tomorrow may trigger a high-conviction breakout.' : 'Previous day did not meet squeeze compression criteria (< 0.85x ATR). Standing aside.';
+        }
+
+        // Blueprint
+        document.getElementById('bnfLongTrigger').innerText = 'Above ₹' + data.setup.longTrigger.toLocaleString('en-IN');
+        document.getElementById('bnfLongSL').innerText = '₹' + data.setup.longSL.toLocaleString('en-IN');
+        document.getElementById('bnfLongTP1').innerText = '₹' + data.setup.longTP1.toLocaleString('en-IN');
+        document.getElementById('bnfLongTP2').innerText = '₹' + data.setup.longTP2.toLocaleString('en-IN');
+
+        document.getElementById('bnfShortTrigger').innerText = 'Below ₹' + data.setup.shortTrigger.toLocaleString('en-IN');
+        document.getElementById('bnfShortSL').innerText = '₹' + data.setup.shortSL.toLocaleString('en-IN');
+        document.getElementById('bnfShortTP1').innerText = '₹' + data.setup.shortTP1.toLocaleString('en-IN');
+        document.getElementById('bnfShortTP2').innerText = '₹' + data.setup.shortTP2.toLocaleString('en-IN');
+
+        document.getElementById('bnfATMStrikes').innerText = data.setup.atmStrike.toLocaleString('en-IN') + ' ATM';
+        document.getElementById('bnfAtmCE').innerText = data.setup.atmCE;
+        document.getElementById('bnfAtmPE').innerText = data.setup.atmPE;
+
+        // Populate Dynamic Strikes in Manual Ticket if not populated
+        const strikeSelect = document.getElementById('ticketStrikeSelect');
+        const atm = data.setup.atmStrike;
+        if (strikeSelect.getAttribute('data-atm') !== String(atm)) {
+          strikeSelect.setAttribute('data-atm', String(atm));
+          strikeSelect.innerHTML = `
+            <option value="${atm - 200}">${atm - 200} (Deep ITM)</option>
+            <option value="${atm - 100}">${atm - 100} (ITM)</option>
+            <option value="${atm}" selected>${atm} (ATM Strike)</option>
+            <option value="${atm + 100}">${atm + 100} (OTM)</option>
+            <option value="${atm + 200}">${atm + 200} (Far OTM)</option>
+          `;
+        }
+        recalculateTicket();
+
+        // Populate Recent Sessions Table
+        const sessTbody = document.getElementById('bnfSessionRows');
+        sessTbody.innerHTML = '';
+        data.recentSessions.forEach(s => {
+          const tr = document.createElement('tr');
+          const isSqueezeBadge = s.compressionSetup ? '<span class="badge" style="background:rgba(245,158,11,0.2);color:#fbbf24;border:1px solid rgba(245,158,11,0.4);">COILED SPRING</span>' : '<span style="color:#64748b;">Normal</span>';
+          let sigClass = '#94a3b8';
+          if (s.signal.includes('BUY')) sigClass = '#4ade80';
+          else if (s.signal.includes('SELL')) sigClass = '#f87171';
+          
+          tr.innerHTML = `
+            <td><b>${s.date}</b></td>
+            <td class="num">₹${s.open.toLocaleString('en-IN')}</td>
+            <td class="num">₹${s.high.toLocaleString('en-IN')}</td>
+            <td class="num">₹${s.low.toLocaleString('en-IN')}</td>
+            <td class="num"><b>₹${s.close.toLocaleString('en-IN')}</b></td>
+            <td class="num">${s.range.toLocaleString('en-IN')} pts</td>
+            <td class="num">${s.atr.toLocaleString('en-IN')} pts</td>
+            <td>${isSqueezeBadge}</td>
+            <td style="color:${sigClass};font-weight:700;">${s.signal}</td>
+            <td style="color:#cbd5e1;font-size:12px;">${s.outcome}</td>
+          `;
+          sessTbody.appendChild(tr);
+        });
+
+        // Feed tick to Paper Trading Engine
+        updateLiveOptionPrices(data.live.price, data.live.curATR);
+        checkAutoTradeTriggers(data);
+      } catch (e) {
+        console.error('Error in fetchBankNiftyData:', e);
+      }
+    }
+
+    async function loadPineScript() {
+      try {
+        const res = await fetch('/api/pine-script');
+        const code = await res.text();
+        document.getElementById('pineScriptCodeEl').innerText = code;
+      } catch (e) {}
+    }
+
+    function copyPineScript() {
+      const code = document.getElementById('pineScriptCodeEl').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.getElementById('copyPineBtn');
+        const old = btn.innerHTML;
+        btn.innerHTML = '✅ Copied!';
+        btn.style.background = '#22c55e';
+        showToast('Pine Script copied to clipboard!', '📋');
+        setTimeout(() => {
+          btn.innerHTML = old;
+          btn.style.background = '';
+        }, 2000);
+      });
+    }
+
+    // Initialize on load
+    loadPaperState();
+    fetchBankNiftyData();
+    setInterval(fetchBankNiftyData, 3000);
+  </script>
+</body>
+</html>

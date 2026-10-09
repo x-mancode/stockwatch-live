@@ -5,6 +5,7 @@ const path = require('path');
 const PORT = process.env.PORT || parseInt(process.argv[2], 10) || 8888;
 const stocksTxtPath = path.join(__dirname, 'stocks.txt');
 const indexHtmlPath = path.join(__dirname, 'index.html');
+const bankNiftyHtmlPath = path.join(__dirname, 'banknifty.html');
 const pineScriptPath = path.join(__dirname, 'BankNifty_Volatility_Squeeze_Strategy.pine');
 
 // ==============================================================================
@@ -599,7 +600,17 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Serve Main HTML Dashboard Page for / and /banknifty
+  // Route: Bank Nifty Dedicated Quant & Options Paper Trading Terminal
+  if (url === '/banknifty' || url === '/banknifty.html') {
+    if (fs.existsSync(bankNiftyHtmlPath)) {
+      const html = fs.readFileSync(bankNiftyHtmlPath, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(html);
+      return;
+    }
+  }
+
+  // Route: Default StockWatch Screener Terminal
   if (fs.existsSync(indexHtmlPath)) {
     const html = fs.readFileSync(indexHtmlPath, 'utf8');
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
