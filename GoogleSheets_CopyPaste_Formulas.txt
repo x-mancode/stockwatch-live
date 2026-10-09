@@ -1,0 +1,67 @@
+========================================================================================
+GOOGLE SHEETS SMART AUTO-FETCH FORMULAS (TYPE SYMBOL & ENTER)
+========================================================================================
+
+Row 1 (Headers):
+A1: F&O Stock Symbol
+B1: Live Price (₹)
+C1: 1D Change (%)
+D1: Futures Signal
+E1: Trade Action
+F1: Stop-Loss Level (₹)
+G1: Stop-Loss Risk (%)
+H1: Target 1 (1:1 ₹)
+I1: Target 2 (1:2 ₹)
+J1: Daily Range (ATR)
+K1: 50-Day Moving Avg (₹)
+L1: 200-Day Moving Avg (₹)
+M1: Technical Bias / Setup
+
+----------------------------------------------------------------------------------------
+FORMULAS FOR ROW 2 (Pre-configured for Rows 2 to 100):
+----------------------------------------------------------------------------------------
+
+Column A: (Type any symbol, e.g. PETRONET, RELIANCE, ZOMATO)
+
+Column B (Live Price with "Not Found" Warning):
+=IF(ISBLANK(A2), "", IFERROR(GOOGLEFINANCE("NSE:" & A2, "price"), "⚠️ NOT FOUND"))
+
+Column C (1D Change %):
+=IF(OR(ISBLANK(A2), B2="⚠️ NOT FOUND"), "", IFERROR(GOOGLEFINANCE("NSE:" & A2, "changepct")/100, 0))
+
+Column D (Futures Signal with Invalid Stock Warning):
+=IF(ISBLANK(A2), "", IF(B2="⚠️ NOT FOUND", "⚠️ INVALID STOCK ON NSE", IFERROR(IF(B2="Loading...", "⏳ LOADING", IF(AND(B2>K2, K2>L2), "🟢 STRONG LONG", IF(B2>K2, "🟢 LONG", IF(AND(B2<K2, K2<L2), "🔴 STRONG SHORT", IF(B2<K2, "🔴 SHORT", "⚪ NO TRADE"))))), "⚪ NO TRADE")))
+
+Column E (Trade Action):
+=IF(OR(ISBLANK(A2), B2="⚠️ NOT FOUND"), "", IF(ISNUMBER(SEARCH("STRONG LONG", D2)), "🟢 BUY FUTURE (High Conviction)", IF(ISNUMBER(SEARCH("LONG", D2)), "🟢 BUY FUTURE (Pullback Entry)", IF(ISNUMBER(SEARCH("STRONG SHORT", D2)), "🔴 SELL / SHORT FUTURE (High Conviction)", IF(ISNUMBER(SEARCH("SHORT", D2)), "🔴 SELL / SHORT FUTURE (Resistance)", "⚪ STAND ASIDE (Wait)")))))
+
+Column F (Stop-Loss Level ₹ - Above for Short, Below for Long):
+=IF(OR(ISBLANK(A2), B2="⚠️ NOT FOUND"), "", IFERROR(IF(ISNUMBER(SEARCH("LONG", D2)), ROUND(B2 - (1.5 * J2), 2), IF(ISNUMBER(SEARCH("SHORT", D2)), ROUND(B2 + (1.5 * J2), 2), "-")), "-"))
+
+Column G (Stop-Loss Risk %):
+=IF(OR(ISBLANK(A2), B2="⚠️ NOT FOUND", NOT(ISNUMBER(F2))), "", IFERROR(ROUND(ABS(B2 - F2) / B2, 4), "-"))
+
+Column H (Target 1 - 1:1 Risk/Reward ₹):
+=IF(OR(ISBLANK(A2), B2="⚠️ NOT FOUND"), "", IFERROR(IF(ISNUMBER(SEARCH("LONG", D2)), ROUND(B2 + (1.5 * J2), 2), IF(ISNUMBER(SEARCH("SHORT", D2)), ROUND(B2 - (1.5 * J2), 2), "-")), "-"))
+
+Column I (Target 2 - 1:2 Risk/Reward ₹):
+=IF(OR(ISBLANK(A2), B2="⚠️ NOT FOUND"), "", IFERROR(IF(ISNUMBER(SEARCH("LONG", D2)), ROUND(B2 + (3.0 * J2), 2), IF(ISNUMBER(SEARCH("SHORT", D2)), ROUND(B2 - (3.0 * J2), 2), "-")), "-"))
+
+Column J (Daily ATR Volatility Proxy):
+=IF(OR(ISBLANK(A2), B2="⚠️ NOT FOUND"), "", IFERROR(ROUND(MAX(GOOGLEFINANCE("NSE:" & A2, "high") - GOOGLEFINANCE("NSE:" & A2, "low"), B2 * 0.015), 2), 5))
+
+Column K (50-Day Moving Average):
+=IF(OR(ISBLANK(A2), B2="⚠️ NOT FOUND"), "", IFERROR(ROUND(AVERAGE(INDEX(GOOGLEFINANCE("NSE:" & A2, "price", TODAY()-75, TODAY()), , 2)), 2), B2))
+
+Column L (200-Day Moving Average):
+=IF(OR(ISBLANK(A2), B2="⚠️ NOT FOUND"), "", IFERROR(ROUND(AVERAGE(INDEX(GOOGLEFINANCE("NSE:" & A2, "price", TODAY()-300, TODAY()), , 2)), 2), B2))
+
+Column M (Technical Bias):
+=IF(OR(ISBLANK(A2), B2="⚠️ NOT FOUND"), "", IF(ISNUMBER(SEARCH("LONG", D2)), "🚀 Bullish (Trade with Trend)", IF(ISNUMBER(SEARCH("SHORT", D2)), "🔻 Bearish Breakdown (Short on Rise)", "↔️ Choppy / Range (Wait for Breakout)")))
+
+========================================================================================
+FEATURES:
+1. Blank rows stay 100% clean and empty.
+2. The moment you type any symbol into Column A and hit Enter, all columns auto-fetch!
+3. If a typo or invalid ticker is entered, Column B shows "⚠️ NOT FOUND" and Column D shows "⚠️ INVALID STOCK ON NSE".
+========================================================================================
