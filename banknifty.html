@@ -137,7 +137,11 @@
       border-radius: 12px;
       border: 1px solid var(--border-color);
       margin-bottom: 14px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
     }
+    .bnf-nav-tabs::-webkit-scrollbar { display: none; }
     .bnf-tab-btn {
       flex: 1;
       background: transparent;
@@ -358,13 +362,22 @@
       .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
     }
     @media (max-width: 600px) {
-      .container { padding: 10px 10px 30px 10px !important; }
+      .container { padding: 8px 8px 30px 8px !important; gap: 10px !important; }
       .brand-title { font-size: 15px !important; }
-      .nav-tabs { width: 100%; overflow-x: auto; padding-bottom: 3px; }
-      .nav-tab-btn, .nav-tab-link { font-size: 11px !important; padding: 5px 10px !important; white-space: nowrap; }
+      .top-bar { padding: 10px 12px !important; gap: 8px !important; }
+      .brand-group { width: 100%; justify-content: space-between; }
+      .meta-group { width: 100%; justify-content: flex-start; gap: 8px !important; }
+      .nav-screener-btn { font-size: 11px !important; padding: 5px 10px !important; }
+      .bnf-nav-tabs { width: 100%; overflow-x: auto; padding: 4px; gap: 6px; -webkit-overflow-scrolling: touch; }
+      .bnf-tab-btn { flex: 0 0 auto !important; font-size: 12px !important; padding: 9px 13px !important; white-space: nowrap !important; }
+      .autotrade-card { flex-direction: column !important; align-items: stretch !important; gap: 12px !important; padding: 14px !important; }
+      .autotrade-controls { width: 100%; justify-content: flex-start; flex-wrap: wrap; gap: 8px !important; }
+      .portfolio-grid { grid-template-columns: 1fr !important; }
       .kpi-grid { grid-template-columns: 1fr !important; }
       .bnf-metrics-row { flex-direction: column; gap: 6px; align-items: flex-start; }
       .bt-range-btn { white-space: nowrap; }
+      .btn-group { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
+      .ticket-card { padding: 14px !important; }
     }
 
     /* Manual Order Ticket */
@@ -717,6 +730,7 @@
       </div>
       <div class="meta-group">
         <a href="/" class="nav-screener-btn">📊 StockWatch Screener</a>
+        <a href="/backtest" class="nav-screener-btn" style="border-color: #8b5cf6; color: #c4b5fd;">🧪 Strategy Backtester</a>
         <span style="color: #64748b;">|</span>
         <span id="marketDetailText" style="color: #94a3b8; font-size: 12px;">Market Closed</span>
         <span style="color: #64748b;">|</span>

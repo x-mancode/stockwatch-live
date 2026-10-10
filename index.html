@@ -586,15 +586,31 @@
 
     @media (max-width: 768px) {
       body { padding: 8px; }
-      .brand-title { font-size: 17px; }
-      .top-bar { padding: 12px 14px; }
+      .brand-title { font-size: 16px; }
+      .top-bar { padding: 10px 12px; gap: 8px; }
+      .brand-group { width: 100%; justify-content: space-between; }
+      .meta-group { width: 100%; justify-content: flex-start; gap: 6px; }
       .controls { flex-direction: column; align-items: stretch; }
       .add-form { max-width: 100%; width: 100%; }
-      .btn-group { width: 100%; justify-content: space-between; }
-      .btn-group .btn { flex: 1; }
+      .btn-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        width: 100%;
+        gap: 8px;
+      }
+      .btn-group .btn {
+        width: 100%;
+        font-size: 11px;
+        padding: 8px 6px;
+        white-space: normal;
+        text-align: center;
+        line-height: 1.2;
+        min-height: 38px;
+      }
       .cards-grid { grid-template-columns: 1fr; max-height: calc(100vh - 250px); }
       .table-container { max-height: calc(100vh - 250px); }
       .calc-grid { grid-template-columns: 1fr; }
+      .bn-nav-btn { font-size: 11px; padding: 5px 10px; }
     }
   </style>
 </head>
@@ -619,6 +635,7 @@
         <span>IST: <b id="updateTime" style="color: #f1f5f9;">Loading...</b></span>
         <span style="color: #64748b;">|</span>
         <a href="/banknifty" class="bn-nav-btn">⚡ Bank Nifty Quant & Paper Trading →</a>
+        <a href="/backtest" class="bn-nav-btn" style="background: linear-gradient(135deg, #581c87 0%, #7c3aed 100%);">🧪 Custom Backtester →</a>
       </div>
     </div>
 
